@@ -4,14 +4,106 @@ import CreatedBy from "@/components/CreatedBy";
 import SurveySection from "@/components/SurveySection";
 
 const POSTS = [
-  { av: "#3a3a38", nw: 62, ih: 44, lw: 32, cost: "+3 Min", note: "weg", icon: "play", tone: "lime" },
-  { av: "#2e4a3e", nw: 78, ih: 68, lw: 26, cost: "+8 Min", note: "Dopamin", icon: "chat", tone: "green" },
-  { av: "#4a2e2e", nw: 52, ih: 52, lw: 36, cost: "+5 Min", note: "nichts behalten", icon: "heart", tone: "rose" },
-  { av: "#2e3a4a", nw: 70, ih: 58, lw: 22, cost: "+11 Min", note: "Autopilot", icon: "spark", tone: "blue" },
-  { av: "#3a4a2e", nw: 58, ih: 76, lw: 30, cost: "+4 Min", note: "Fokus weg", icon: "save", tone: "olive" },
-  { av: "#4a3a2e", nw: 66, ih: 48, lw: 34, cost: "+6 Min", note: "nur noch eins", icon: "reel", tone: "mint" },
-  { av: "#2e2e4a", nw: 74, ih: 62, lw: 24, cost: "+9 Min", note: "Zeit verrauscht", icon: "bell", tone: "violet" },
-  { av: "#3a2e4a", nw: 48, ih: 38, lw: 40, cost: "+2 Min", note: "Scrollreflex", icon: "dot", tone: "purple" },
+  {
+    user: "lina.daily",
+    place: "Berlin, Germany",
+    ih: 168,
+    cost: "+3 Min",
+    note: "weg",
+    likes: "12.482",
+    caption: "kurzer Blick, langer Loop",
+    photo: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=560&q=80",
+  },
+  {
+    user: "reelpilot",
+    place: "For you",
+    ih: 190,
+    cost: "+8 Min",
+    note: "Dopamin",
+    likes: "48.201",
+    caption: "noch ein Clip, dann wirklich Pause",
+    photo: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=560&q=80",
+  },
+  {
+    user: "noah.frames",
+    place: "Cafe Mitte",
+    ih: 176,
+    cost: "+5 Min",
+    note: "nichts behalten",
+    likes: "9.874",
+    caption: "alles gesehen, nichts gespeichert",
+    photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=560&q=80",
+  },
+  {
+    user: "studio.after",
+    place: "New post",
+    ih: 184,
+    cost: "+11 Min",
+    note: "Autopilot",
+    likes: "31.590",
+    caption: "der Feed merkt schneller als du, was dich haelt",
+    photo: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=560&q=80",
+  },
+  {
+    user: "slowoutdoors",
+    place: "Dolomites",
+    ih: 202,
+    cost: "+4 Min",
+    note: "Fokus weg",
+    likes: "22.118",
+    caption: "eigentlich wolltest du nur eine Nachricht checken",
+    photo: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=560&q=80",
+  },
+  {
+    user: "citybreaks",
+    place: "Lisbon",
+    ih: 174,
+    cost: "+6 Min",
+    note: "nur noch eins",
+    likes: "15.730",
+    caption: "aus einem Post wird eine halbe Stunde",
+    photo: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=560&q=80",
+  },
+  {
+    user: "night.study",
+    place: "Saved reel",
+    ih: 188,
+    cost: "+9 Min",
+    note: "Zeit verrauscht",
+    likes: "67.042",
+    caption: "gespeichert fuer spaeter, vergessen fuer immer",
+    photo: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=560&q=80",
+  },
+  {
+    user: "crew.room",
+    place: "Campus",
+    ih: 166,
+    cost: "+2 Min",
+    note: "Scrollreflex",
+    likes: "6.318",
+    caption: "alle schauen kurz. keiner merkt wie lange",
+    photo: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=560&q=80",
+  },
+  {
+    user: "morning.fit",
+    place: "Story replay",
+    ih: 196,
+    cost: "+7 Min",
+    note: "Daumen weiter",
+    likes: "18.506",
+    caption: "du bist nicht muede, du bist ueberreizt",
+    photo: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=560&q=80",
+  },
+  {
+    user: "soft.news",
+    place: "Explore",
+    ih: 170,
+    cost: "+10 Min",
+    note: "noch ein Tab",
+    likes: "53.809",
+    caption: "alles wichtig, nichts dringend",
+    photo: "https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=560&q=80",
+  },
 ];
 
 const PARTICLES = ["+3 Min", "+8 Min", "+5 Min", "+11 Min", "+4 Min", "+6 Min", "+9 Min", "+2 Min"];
@@ -51,6 +143,7 @@ export default function Home() {
   const feedYRef     = useRef(0);
   const feedSpeedRef = useRef(0.6);
   const feedPausedRef = useRef(false);
+  const feedDrivenByScrollRef = useRef(true);
   const rafRef       = useRef<number>(0);
 
   const yr = Math.round(hours * 365);
@@ -110,16 +203,16 @@ export default function Home() {
     if (hintRef.current)   hintRef.current.style.opacity   = p < 0.04 ? "1" : "0";
     if (bgWordRef.current) bgWordRef.current.style.opacity = String(lerp(1, 0, easeOut(phase(p, 0.1, 0.35))));
     if (particlesRef.current) {
-      const particleIn = easeOut(phase(p, 0.26, 0.47));
-      const particleOut = easeOut(phase(p, 0.68, 0.82));
+      const particleIn = easeOut(phase(p, 0.22, 0.50));
+      const particleOut = easeOut(phase(p, 0.72, 0.86));
       particlesRef.current.style.opacity = String(particleIn * (1 - particleOut));
       particlesRef.current.style.transform = `translate(-50%, calc(-50% - ${Math.round(particleIn * 44)}px))`;
     }
-    setTimeDebt(Math.round(lerp(0, 60, easeOut(phase(p, 0.04, 0.82)))));
+    setTimeDebt(Math.round(lerp(0, 60, easeOut(phase(p, 0.04, 0.90)))));
 
-    const pA = phase(p, 0, 0.30);
-    const pB = phase(p, 0.30, 0.50);
-    const pD = phase(p, 0.65, 0.80);
+    const pA = phase(p, 0, 0.24);
+    const pB = phase(p, 0.08, 0.68);
+    const pD = phase(p, 0.78, 0.92);
 
     const growE  = easeInOut(pA);
     const maxW   = Math.min(VW, VH / 2.16);
@@ -136,21 +229,33 @@ export default function Home() {
     phone.style.borderRadius = phoneBR + "px";
 
     if (glowRef.current) {
-      glowRef.current.style.opacity      = String(easeInOut(phase(p, 0.25, 0.45)) * (1 - easeOut(phase(p, 0.55, 0.70))));
+      glowRef.current.style.opacity      = String(easeInOut(phase(p, 0.22, 0.46)) * (1 - easeOut(phase(p, 0.72, 0.86))));
       glowRef.current.style.borderRadius = (phoneBR + 6) + "px";
     }
 
     feedSpeedRef.current = lerp(0.6, 5, pB * (1 - phase(p, 0.55, 0.75)));
 
-    if (p < 0.28) {
+    const feedEl = feedInnerRef.current;
+    if (feedEl) {
+      const feedLoopHeight = feedEl.scrollHeight / 3;
+      if (feedLoopHeight > 0) {
+        const feedProgress = easeInOut(phase(p, 0.02, 0.68));
+        const feedDistance = feedLoopHeight * 1.18;
+        feedYRef.current = -feedDistance * feedProgress;
+        feedEl.style.transform = `translateY(${feedYRef.current}px)`;
+        feedDrivenByScrollRef.current = p < 0.94;
+      }
+    }
+
+    if (p < 0.60) {
       setLayers(1, 0, 0);
-    } else if (p < 0.52) {
-      const t = phase(p, 0.28, 0.52);
+    } else if (p < 0.74) {
+      const t = phase(p, 0.60, 0.74);
       setLayers(lerp(1, 0.2, easeOut(t)), easeOut(t) * 0.95, 0);
-    } else if (p < 0.62) {
+    } else if (p < 0.82) {
       setLayers(0.1, 0.95, 0);
-    } else if (p < 0.78) {
-      const t = phase(p, 0.62, 0.78);
+    } else if (p < 0.94) {
+      const t = phase(p, 0.82, 0.94);
       setLayers(0, lerp(0.95, 0, easeOut(t)), easeOut(t));
     } else {
       setLayers(0, 0, 1);
@@ -161,9 +266,11 @@ export default function Home() {
     const tick = () => {
       const el = feedInnerRef.current;
       if (el) {
-        if (!feedPausedRef.current) feedYRef.current -= feedSpeedRef.current;
-        const h = el.scrollHeight / 3;
-        if (Math.abs(feedYRef.current) >= h) feedYRef.current = 0;
+        if (!feedDrivenByScrollRef.current && !feedPausedRef.current) {
+          feedYRef.current -= feedSpeedRef.current;
+          const h = el.scrollHeight / 3;
+          if (Math.abs(feedYRef.current) >= h) feedYRef.current = 0;
+        }
         el.style.transform = `translateY(${feedYRef.current}px)`;
       }
       rafRef.current = requestAnimationFrame(tick);
@@ -203,7 +310,7 @@ export default function Home() {
           </div>
           <div className="hero-prompt">
             <span>Scroll nach unten</span>
-            <strong>und hover mit der Maus ueber das Smartphone</strong>
+            <strong>und hover mit der Maus über das Smartphone</strong>
           </div>
           
 
@@ -259,25 +366,27 @@ export default function Home() {
                             <small>{p.note}</small>
                           </div>
                           <div className="fpost-top">
-                            <div className="favatar" style={{ background: p.av, width: 28, height: 28, borderRadius: "50%" }} />
+                            <div className="favatar" style={{ backgroundImage: `url(${p.photo})` }} />
                             <div className="fnames">
-                              <div className="fname" style={{ width: `${p.nw}%` }} />
-                              <div className="fsub"  style={{ width: `${p.nw * 0.6}%` }} />
+                              <div className="fuser">{p.user}</div>
+                              <div className="fplace">{p.place}</div>
                             </div>
+                            <div className="fdots">...</div>
                           </div>
-                          <div className={`fimg ${p.tone}`} style={{ height: p.ih }}>
-                            <span className={`fimg-icon ${p.icon}`} />
-                            <span className="fimg-blur one" />
-                            <span className="fimg-blur two" />
-                          </div>
+                          <div
+                            className="fimg"
+                            style={{ height: p.ih, backgroundImage: `url(${p.photo})` }}
+                          />
                           <div className="factions">
-                            <span className="fheart">♡</span>
-                            <div className="faction" style={{ width: `${p.lw}%` }} />
-                            <div className="faction" style={{ width: "20%" }} />
+                            <span>♡</span>
+                            <span>◌</span>
+                            <span>↗</span>
+                            <span className="fsave">▱</span>
                           </div>
+                          <div className="flikes">{p.likes} Likes</div>
                           <div className="fcaption">
-                            <strong>@mindscroll</strong>
-                            <span>Noch ein Post. Noch ein Impuls. {p.note}.</span>
+                            <strong>{p.user}</strong>
+                            <span>{p.caption}</span>
                           </div>
                         </div>
                       ))}
@@ -420,7 +529,7 @@ export default function Home() {
         body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;}
         .main{width:100%;}
 
-        .story{position:relative;height:500vh;}
+        .story{position:relative;height:820vh;}
         .sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#2c3323 0%,#22291b 58%,#1b2216 100%);}
         .brand-logo{position:absolute;top:22px;left:24px;z-index:40;display:inline-flex;align-items:center;height:46px;padding:4px 10px 4px 4px;background:#090907;border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.08);text-decoration:none;transform:translateZ(0);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;}
         .brand-logo:hover{transform:translateY(-1px);border-color:rgba(212,245,71,.45);box-shadow:0 22px 48px rgba(0,0,0,.44),0 0 28px rgba(212,245,71,.1),inset 0 1px 0 rgba(255,255,255,.1);}
@@ -495,36 +604,18 @@ export default function Home() {
         .fpost-cost span{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;line-height:1;color:var(--accent);}
         .fpost-cost small{font-size:9px;line-height:1.15;color:var(--dim);white-space:nowrap;}
         .fpost-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+        .favatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;background-size:cover;background-position:center;box-shadow:0 0 0 2px rgba(32,38,25,.92),0 0 0 3px rgba(212,245,71,.65);}
         .fnames{flex:1;}
-        .fname{height:7px;border-radius:3px;background:rgba(255,255,255,.2);margin-bottom:4px;}
-        .fsub{height:5px;border-radius:3px;background:rgba(255,255,255,.1);}
-        .fimg{position:relative;width:100%;border-radius:8px;overflow:hidden;background:#25271f;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);}
-        .fimg::before{content:"";position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.22),transparent 32%,rgba(0,0,0,.26));opacity:.92;}
-        .fimg::after{content:"";position:absolute;left:0;right:0;bottom:0;height:38%;background:linear-gradient(to top,rgba(0,0,0,.44),transparent);}
-        .fimg.lime{background:linear-gradient(135deg,#d4f547,#566222 42%,#151711);}
-        .fimg.green{background:linear-gradient(135deg,#6ee7a8,#23533c 46%,#151711);}
-        .fimg.rose{background:linear-gradient(135deg,#f29a9a,#743838 48%,#17120f);}
-        .fimg.blue{background:linear-gradient(135deg,#9ab7ff,#293b6a 47%,#12151b);}
-        .fimg.olive{background:linear-gradient(135deg,#b5d66b,#43542b 48%,#151711);}
-        .fimg.mint{background:linear-gradient(135deg,#d4f547,#6b8a35 48%,#1b2216);}
-        .fimg.violet{background:linear-gradient(135deg,#b8a0ff,#40346f 48%,#151322);}
-        .fimg.purple{background:linear-gradient(135deg,#d59cff,#533060 48%,#18111c);}
-        .fimg-blur{position:absolute;border-radius:999px;filter:blur(12px);opacity:.58;}
-        .fimg-blur.one{width:48%;height:62%;left:12%;top:18%;background:rgba(255,255,255,.34);}
-        .fimg-blur.two{width:42%;height:54%;right:8%;bottom:10%;background:rgba(0,0,0,.38);}
-        .fimg-icon{position:absolute;z-index:2;left:50%;top:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);border-radius:50%;background:rgba(10,10,8,.52);border:1px solid rgba(255,255,255,.22);box-shadow:0 10px 28px rgba(0,0,0,.3);backdrop-filter:blur(8px);}
-        .fimg-icon::before{font-size:16px;color:#f4efe6;line-height:1;}
-        .fimg-icon.play::before{content:"▶";}
-        .fimg-icon.chat::before{content:"••";}
-        .fimg-icon.heart::before{content:"♡";}
-        .fimg-icon.spark::before{content:"✦";}
-        .fimg-icon.save::before{content:"▰";}
-        .fimg-icon.reel::before{content:"▻";}
-        .fimg-icon.bell::before{content:"!";}
-        .fimg-icon.dot::before{content:"•";}
-        .factions{display:flex;gap:12px;margin-top:8px;align-items:center;}
-        .faction{height:5px;border-radius:3px;background:rgba(255,255,255,.1);}
-        .fheart{font-size:14px;opacity:.6;}
+        .fuser{font-size:11px;font-weight:700;color:var(--text);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .fplace{margin-top:2px;font-size:9px;color:rgba(247,242,232,.56);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .fdots{font-size:14px;line-height:1;color:rgba(247,242,232,.72);letter-spacing:1px;transform:translateY(-3px);}
+        .fimg{position:relative;width:100%;border-radius:9px;overflow:hidden;background-color:#25271f;background-size:cover;background-position:center;box-shadow:0 14px 28px rgba(0,0,0,.24),inset 0 0 0 1px rgba(255,255,255,.08);transition:transform .18s ease,filter .18s ease,box-shadow .18s ease;}
+        .fimg::before{content:"";position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.16),transparent 34%),linear-gradient(to top,rgba(0,0,0,.42),transparent 48%);pointer-events:none;}
+        .fimg::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 22% 12%,rgba(255,255,255,.24),transparent 22%);mix-blend-mode:screen;opacity:.42;pointer-events:none;}
+        .fpost:hover .fimg{transform:scale(1.015);filter:saturate(1.08) contrast(1.04);box-shadow:0 18px 34px rgba(0,0,0,.28),0 0 24px rgba(212,245,71,.08),inset 0 0 0 1px rgba(255,255,255,.1);}
+        .factions{display:grid;grid-template-columns:auto auto auto 1fr;gap:11px;margin-top:9px;align-items:center;font-size:15px;line-height:1;color:rgba(247,242,232,.9);}
+        .fsave{justify-self:end;}
+        .flikes{margin-top:7px;font-size:10px;font-weight:700;color:var(--text);line-height:1;}
         .fcaption{display:flex;gap:5px;align-items:baseline;margin-top:7px;font-size:10px;line-height:1.35;color:rgba(247,242,232,.72);}
         .fcaption strong{color:var(--text);font-size:10px;}
         .fcaption span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
