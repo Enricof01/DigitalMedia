@@ -12,8 +12,14 @@ export default function CreatedBy() {
 
   useEffect(() => {
     fetch("/api/users")
-      .then((res) => res.json())
-      .then((data) => setUsers(data));
+      .then(async (res) => {
+        if (!res.ok) return [];
+
+        const data: unknown = await res.json();
+        return Array.isArray(data) ? data : [];
+      })
+      .then((data) => setUsers(data))
+      .catch(() => setUsers([]));
   }, []);
 
   return (

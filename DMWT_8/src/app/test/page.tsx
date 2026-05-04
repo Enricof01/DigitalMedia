@@ -24,6 +24,12 @@ const ALTS = [
   { e: "🌍", t: "Sprache lernen",     d: "Grundkenntnisse in 6 Mon.",       hpb: 150 },
 ];
 
+const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+const easeInOut = (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+const lerp = (a: number, b: number, t: number) => a + (b - a) * clamp(t, 0, 1);
+const phase = (p: number, s: number, e: number) => clamp((p - s) / (e - s), 0, 1);
+
 export default function Home() {
   const [hours, setHours] = useState(2);
   const [activeAlt, setActiveAlt] = useState<number | null>(null);
@@ -43,12 +49,6 @@ export default function Home() {
 
   const yr = Math.round(hours * 365);
   const thumbKm = ((hours * 60 * 20) / 1000).toFixed(1);
-
-  const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
-  const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-  const easeInOut = (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-  const lerp = (a: number, b: number, t: number) => a + (b - a) * clamp(t, 0, 1);
-  const phase = (p: number, s: number, e: number) => clamp((p - s) / (e - s), 0, 1);
 
   const setLayers = useCallback((feed: number, reveal: number, calc: number) => {
     if (layerFeedRef.current) { layerFeedRef.current.style.opacity = String(feed); layerFeedRef.current.style.pointerEvents = feed > 0.5 ? "auto" : "none"; }
@@ -79,9 +79,9 @@ export default function Home() {
     const tgtW   = Math.min(340, VW * 0.85);
     const tgtH   = tgtW * 2.16;
 
-    let phoneW = lerp(lerp(340, maxW, growE), tgtW, easeOut(pD));
-    let phoneH = lerp(lerp(734, maxH, growE), tgtH, easeOut(pD));
-    let phoneBR = lerp(lerp(44, 0, growE), 44, easeOut(pD));
+    const phoneW = lerp(lerp(340, maxW, growE), tgtW, easeOut(pD));
+    const phoneH = lerp(lerp(734, maxH, growE), tgtH, easeOut(pD));
+    const phoneBR = lerp(lerp(44, 0, growE), 44, easeOut(pD));
 
     phone.style.width        = phoneW + "px";
     phone.style.height       = phoneH + "px";
@@ -193,7 +193,7 @@ export default function Home() {
                 <div className="screen-layer" ref={layerCalcRef}>
                   <div className="calc-layer">
                     <div className="calc-header">
-                      <div className="calc-eyebrow">// Rechne nach</div>
+                      <div className="calc-eyebrow">{"// Rechne nach"}</div>
                       <div className="calc-title">Was hättest du<br />stattdessen getan?</div>
                     </div>
                     <div className="calc-scroll">
@@ -260,7 +260,7 @@ export default function Home() {
       {/* ═══ TRUTH ═══ */}
       <section className="truth">
         <div className="truth-inner">
-          <div className="truth-q">"Die Apps sind dafür gebaut, dich <strong>nicht loszulassen</strong>. Jedes Mal wenn du scrollst, wird ein Algorithmus klüger. Du nicht."</div>
+          <div className="truth-q">&quot;Die Apps sind dafür gebaut, dich <strong>nicht loszulassen</strong>. Jedes Mal wenn du scrollst, wird ein Algorithmus klüger. Du nicht.&quot;</div>
           <div className="truth-row">
             <div className="truth-s"><span className="truth-n">2,5h</span><span className="truth-d">Deutsche scrollen täglich auf Social Media</span></div>
             <div className="truth-s"><span className="truth-n">38 Tage</span><span className="truth-d">pro Jahr wach, bewusst, weggescrollt</span></div>
@@ -414,7 +414,6 @@ export default function Home() {
     </main>
   );
 }
-
 
 
 
