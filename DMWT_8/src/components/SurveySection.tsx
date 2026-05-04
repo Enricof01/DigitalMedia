@@ -6,6 +6,27 @@ const MAIN_APPS = ["TikTok", "Instagram", "YouTube", "WhatsApp"];
 const MOMENTS = ["Morgens", "Pausen", "Abends", "Bett"];
 const GOALS = ["60 Minuten", "Besser schlafen", "Mehr Fokus", "Weniger Reflex"];
 
+const APP_STEPS: Record<string, string> = {
+  TikTok: "TikTok heute aus dem Homescreen ziehen und erst nach der Challenge wieder oeffnen.",
+  Instagram: "Instagram heute in einen Ordner auf die letzte Seite verschieben.",
+  YouTube: "YouTube-Autoplay ausschalten und nur eine bewusste Suche erlauben.",
+  WhatsApp: "WhatsApp-Benachrichtigungen fuer Gruppen bis morgen stumm schalten.",
+};
+
+const MOMENT_STEPS: Record<string, string> = {
+  Morgens: "Die ersten 30 Minuten nach dem Aufstehen bleiben bildschirmfrei.",
+  Pausen: "In der naechsten Pause ohne Handy aufstehen, Wasser holen, kurz rausgehen.",
+  Abends: "Ab 21 Uhr liegt das Handy ausser Reichweite, nicht neben dem Bett.",
+  Bett: "Das Handy laedt heute ausserhalb des Schlafzimmers.",
+};
+
+const GOAL_STEPS: Record<string, string> = {
+  "60 Minuten": "Einen 60-Minuten-Block im Kalender reservieren und wirklich leer lassen.",
+  "Besser schlafen": "Die letzte Stunde vor dem Schlafen ohne Feed verbringen.",
+  "Mehr Fokus": "Morgen mit einem 25-Minuten-Fokusblock starten, bevor Apps aufgehen.",
+  "Weniger Reflex": "Bei jedem Griff zum Handy einmal laut benennen, warum du es oeffnest.",
+};
+
 type SaveState = "idle" | "saving" | "saved" | "error";
 
 type SurveyResult = {
@@ -28,10 +49,18 @@ export default function SurveySection() {
   }, [dailyMinutes]);
 
   const yearlyHours = Math.round((dailyMinutes * 365) / 60);
+  const yearlyDays = Math.round(yearlyHours / 16);
+  const possibleBooks = Math.max(1, Math.floor(yearlyHours / 8));
+  const possibleWorkouts = Math.max(1, Math.floor(yearlyHours));
   const estimatedScore = Math.max(
     1,
     Math.min(100, Math.round((dailyMinutes / 720) * 62 + (pickups / 250) * 38)),
   );
+  const planSteps = useMemo(() => [
+    APP_STEPS[mainApp] ?? "Die staerkste App fuer 24 Stunden bewusst ausbremsen.",
+    MOMENT_STEPS[hardestMoment] ?? "Den schwierigsten Moment heute ohne Feed starten.",
+    GOAL_STEPS[goal] ?? "Einen kleinen, messbaren Schritt fuer heute festlegen.",
+  ], [goal, hardestMoment, mainApp]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,8 +115,27 @@ export default function SurveySection() {
                   <h3>Dein Scroll-Druck ist messbar.</h3>
                   <p>
                     Bei {dailyHours} pro Tag liegen etwa {yearlyHours} Stunden
-                    pro Jahr auf dem Tisch. Starte mit {goal.toLowerCase()}.
+                    pro Jahr auf dem Tisch. Das sind rund {yearlyDays} wache Tage.
                   </p>
+                  <div className="survey-result-grid">
+                    <div>
+                      <strong>{possibleBooks}</strong>
+                      <span>Buecher</span>
+                    </div>
+                    <div>
+                      <strong>{possibleWorkouts}</strong>
+                      <span>Workouts</span>
+                    </div>
+                  </div>
+                  <div className="survey-plan">
+                    <div className="survey-plan-title">Dein Plan fuer heute</div>
+                    {planSteps.map((step, index) => (
+                      <div className="survey-plan-step" key={step}>
+                        <span>{index + 1}</span>
+                        <p>{step}</p>
+                      </div>
+                    ))}
+                  </div>
                   <a href="#top" className="survey-submit">
                     Zurueck nach oben
                   </a>
@@ -224,10 +272,20 @@ export default function SurveySection() {
         .survey-submit{width:100%;border:0;border-radius:999px;background:#d4f547;color:#10140d;padding:14px 16px;font:inherit;font-weight:800;text-align:center;text-decoration:none;cursor:pointer;box-shadow:0 16px 38px rgba(212,245,71,.22);margin-top:auto;}
         .survey-submit:disabled{opacity:.68;cursor:wait;}
         .survey-error{font-size:.75rem;line-height:1.4;color:#ffd2d2;margin-bottom:10px;}
-        .survey-result{align-items:center;justify-content:center;text-align:center;padding:18px;}
-        .survey-score{font-family:'Bebas Neue',sans-serif;font-size:7.5rem;line-height:.82;color:#d4f547;margin:18px 0 8px;}
-        .survey-result h3{font-family:'DM Serif Display',serif;font-weight:400;font-size:1.7rem;line-height:1.2;margin-bottom:12px;}
-        .survey-result p{font-size:.9rem;line-height:1.65;color:#d8d3c3;margin-bottom:24px;}
+        .survey-result{align-items:center;text-align:center;padding:10px 4px 4px;overflow-y:auto;scrollbar-width:none;}
+        .survey-result::-webkit-scrollbar{display:none;}
+        .survey-score{font-family:'Bebas Neue',sans-serif;font-size:6.4rem;line-height:.82;color:#d4f547;margin:14px 0 8px;}
+        .survey-result h3{font-family:'DM Serif Display',serif;font-weight:400;font-size:1.55rem;line-height:1.2;margin-bottom:10px;}
+        .survey-result p{font-size:.84rem;line-height:1.55;color:#d8d3c3;margin-bottom:16px;}
+        .survey-result-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-bottom:16px;}
+        .survey-result-grid div{background:#343c29;border:1px solid rgba(212,245,71,.18);border-radius:10px;padding:12px 8px;}
+        .survey-result-grid strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:2.55rem;line-height:.9;color:#d4f547;font-weight:400;}
+        .survey-result-grid span{display:block;margin-top:5px;font-size:10px;color:#b8b09c;text-transform:uppercase;letter-spacing:.1em;}
+        .survey-plan{width:100%;text-align:left;margin-bottom:16px;}
+        .survey-plan-title{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#d4f547;font-weight:800;margin-bottom:8px;}
+        .survey-plan-step{display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-top:1px solid rgba(255,255,255,.08);}
+        .survey-plan-step span{flex-shrink:0;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#d4f547;color:#10140d;font-size:11px;font-weight:900;}
+        .survey-plan-step p{margin:0;color:#e7e2d4;font-size:.78rem;line-height:1.45;}
         @media (max-width:860px){
           .embedded-survey{padding:4rem 1.1rem;}
           .embedded-survey-inner{grid-template-columns:1fr;gap:24px;}
