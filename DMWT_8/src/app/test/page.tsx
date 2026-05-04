@@ -1,16 +1,16 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type PointerEvent } from "react";
 import CreatedBy from "@/components/CreatedBy";
 
 const POSTS = [
-  { av: "#3a3a38", nw: 62, ih: 44, lw: 32 },
-  { av: "#2e4a3e", nw: 78, ih: 68, lw: 26 },
-  { av: "#4a2e2e", nw: 52, ih: 52, lw: 36 },
-  { av: "#2e3a4a", nw: 70, ih: 58, lw: 22 },
-  { av: "#3a4a2e", nw: 58, ih: 76, lw: 30 },
-  { av: "#4a3a2e", nw: 66, ih: 48, lw: 34 },
-  { av: "#2e2e4a", nw: 74, ih: 62, lw: 24 },
-  { av: "#3a2e4a", nw: 48, ih: 38, lw: 40 },
+  { av: "#3a3a38", nw: 62, ih: 44, lw: 32, cost: "+3 Min", note: "weg" },
+  { av: "#2e4a3e", nw: 78, ih: 68, lw: 26, cost: "+8 Min", note: "Dopamin" },
+  { av: "#4a2e2e", nw: 52, ih: 52, lw: 36, cost: "+5 Min", note: "nichts behalten" },
+  { av: "#2e3a4a", nw: 70, ih: 58, lw: 22, cost: "+11 Min", note: "Autopilot" },
+  { av: "#3a4a2e", nw: 58, ih: 76, lw: 30, cost: "+4 Min", note: "Fokus weg" },
+  { av: "#4a3a2e", nw: 66, ih: 48, lw: 34, cost: "+6 Min", note: "nur noch eins" },
+  { av: "#2e2e4a", nw: 74, ih: 62, lw: 24, cost: "+9 Min", note: "Zeit verrauscht" },
+  { av: "#3a2e4a", nw: 48, ih: 38, lw: 40, cost: "+2 Min", note: "Scrollreflex" },
 ];
 
 const ALTS = [
@@ -45,6 +45,7 @@ export default function Home() {
   const bgWordRef    = useRef<HTMLDivElement>(null);
   const feedYRef     = useRef(0);
   const feedSpeedRef = useRef(0.6);
+  const feedPausedRef = useRef(false);
   const rafRef       = useRef<number>(0);
 
   const yr = Math.round(hours * 365);
@@ -54,6 +55,33 @@ export default function Home() {
     if (layerFeedRef.current) { layerFeedRef.current.style.opacity = String(feed); layerFeedRef.current.style.pointerEvents = feed > 0.5 ? "auto" : "none"; }
     if (layerRevRef.current)  layerRevRef.current.style.opacity  = String(reveal);
     if (layerCalcRef.current) { layerCalcRef.current.style.opacity = String(calc);  layerCalcRef.current.style.pointerEvents = calc > 0.5 ? "auto" : "none"; }
+  }, []);
+
+  const onPhonePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    const phone = phoneRef.current;
+    if (!phone) return;
+
+    const rect = phone.getBoundingClientRect();
+    const x = clamp((event.clientX - rect.left) / rect.width, 0, 1);
+    const y = clamp((event.clientY - rect.top) / rect.height, 0, 1);
+
+    phone.style.setProperty("--tilt-x", `${lerp(7, -7, y).toFixed(2)}deg`);
+    phone.style.setProperty("--tilt-y", `${lerp(-8, 8, x).toFixed(2)}deg`);
+    phone.style.setProperty("--glare-x", `${(x * 100).toFixed(1)}%`);
+    phone.style.setProperty("--glare-y", `${(y * 100).toFixed(1)}%`);
+    phone.classList.add("is-hovered");
+  }, []);
+
+  const onPhonePointerLeave = useCallback(() => {
+    const phone = phoneRef.current;
+    if (!phone) return;
+
+    phone.style.setProperty("--tilt-x", "0deg");
+    phone.style.setProperty("--tilt-y", "0deg");
+    phone.style.setProperty("--glare-x", "50%");
+    phone.style.setProperty("--glare-y", "18%");
+    phone.classList.remove("is-hovered");
+    feedPausedRef.current = false;
   }, []);
 
   const onScroll = useCallback(() => {
@@ -113,7 +141,7 @@ export default function Home() {
     const tick = () => {
       const el = feedInnerRef.current;
       if (el) {
-        feedYRef.current -= feedSpeedRef.current;
+        if (!feedPausedRef.current) feedYRef.current -= feedSpeedRef.current;
         const h = el.scrollHeight / 3;
         if (Math.abs(feedYRef.current) >= h) feedYRef.current = 0;
         el.style.transform = `translateY(${feedYRef.current}px)`;
@@ -142,8 +170,14 @@ export default function Home() {
           
 
           <div className="phone-wrap">
-            <div className="phone" ref={phoneRef}>
+            <div
+              className="phone"
+              ref={phoneRef}
+              onPointerMove={onPhonePointerMove}
+              onPointerLeave={onPhonePointerLeave}
+            >
               <div className="phone-glow" ref={glowRef} />
+              <div className="phone-shine" />
               <div className="island"><div className="island-cam" /></div>
               <div className="screen">
 
@@ -153,10 +187,18 @@ export default function Home() {
                     <span className="status-time">9:41</span>
                     <div className="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
                   </div>
-                  <div className="feed-scroll">
+                  <div
+                    className="feed-scroll"
+                    onPointerEnter={() => { feedPausedRef.current = true; }}
+                    onPointerLeave={() => { feedPausedRef.current = false; }}
+                  >
                     <div className="feed-inner" ref={feedInnerRef}>
                       {allPosts.map((p, i) => (
                         <div key={i} className="fpost">
+                          <div className="fpost-cost">
+                            <span>{p.cost}</span>
+                            <small>{p.note}</small>
+                          </div>
                           <div className="fpost-top">
                             <div className="favatar" style={{ background: p.av, width: 28, height: 28, borderRadius: "50%" }} />
                             <div className="fnames">
@@ -232,7 +274,7 @@ export default function Home() {
                                 <div className="ph-alt-body">
                                   <div className="ph-alt-name">{a.t}</div>
                                   <div className="ph-alt-desc">{a.d}</div>
-                                  {isAct && <div className="ph-alt-earned">{earned}× mit {yr}h/Jahr machbar</div>}
+                                  <div className="ph-alt-earned">{earned}× mit {yr}h/Jahr machbar</div>
                                 </div>
                                 <div className="ph-alt-arr">{isAct ? "↑" : "›"}</div>
                               </div>
@@ -313,9 +355,12 @@ export default function Home() {
         .bg-word{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:min(35vw,320px);color:rgba(255,255,255,.022);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;letter-spacing:-.02em;}
         .eyebrow-top{position:absolute;top:5vh;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);z-index:20;white-space:nowrap;}
 
-        .phone-wrap{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:5;pointer-events:none;}
-        .phone{position:relative;width:340px;height:734px;background:#111110;border-radius:44px;border:2px solid rgba(255,255,255,.15);box-shadow:0 0 0 1px rgba(255,255,255,.04),0 40px 120px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,255,255,.03);overflow:hidden;will-change:transform,width,height,border-radius;flex-shrink:0;}
+        .phone-wrap{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:5;pointer-events:none;perspective:1100px;}
+        .phone{position:relative;width:340px;height:734px;background:#111110;border-radius:44px;border:2px solid rgba(255,255,255,.15);box-shadow:0 0 0 1px rgba(255,255,255,.04),0 40px 120px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,255,255,.03);overflow:hidden;will-change:transform,width,height,border-radius;flex-shrink:0;pointer-events:auto;transform:rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg));transform-style:preserve-3d;transition:transform .22s ease,box-shadow .22s ease;}
+        .phone.is-hovered{box-shadow:0 0 0 1px rgba(255,255,255,.08),0 48px 135px rgba(0,0,0,.95),0 0 44px rgba(212,245,71,.08),inset 0 0 0 1px rgba(255,255,255,.05);}
         .phone-glow{position:absolute;inset:-5px;border-radius:49px;border:2px solid var(--accent);opacity:0;pointer-events:none;box-shadow:0 0 25px 5px rgba(212,245,71,.2);}
+        .phone-shine{position:absolute;inset:1px;border-radius:inherit;z-index:24;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--glare-x,50%) var(--glare-y,18%),rgba(255,255,255,.28),rgba(212,245,71,.11) 16%,rgba(255,255,255,.04) 31%,transparent 48%);mix-blend-mode:screen;transition:opacity .18s ease;}
+        .phone.is-hovered .phone-shine{opacity:.9;}
         .island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:90px;height:28px;background:#0a0a08;border-radius:14px;z-index:30;display:flex;align-items:center;justify-content:center;}
         .island-cam{width:8px;height:8px;border-radius:50%;background:#1a1a18;border:1px solid #2a2a28;}
         .screen{position:absolute;inset:0;overflow:hidden;border-radius:inherit;}
@@ -327,7 +372,14 @@ export default function Home() {
         .status-icons{display:flex;gap:5px;align-items:center;font-size:11px;}
         .feed-scroll{position:absolute;top:48px;left:0;right:0;bottom:60px;overflow:hidden;}
         .feed-inner{will-change:transform;}
-        .fpost{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);}
+        .fpost{position:relative;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);overflow:hidden;transition:background .18s ease,transform .18s ease,border-color .18s ease;}
+        .fpost::before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(212,245,71,.12),transparent 42%);opacity:0;pointer-events:none;transition:opacity .18s ease;}
+        .fpost:hover{background:rgba(255,255,255,.035);border-color:rgba(212,245,71,.22);transform:translateY(-1px);}
+        .fpost:hover::before{opacity:1;}
+        .fpost-cost{position:absolute;top:10px;right:12px;z-index:3;display:flex;flex-direction:column;align-items:flex-end;gap:1px;padding:7px 8px;border-radius:8px;background:rgba(10,10,8,.76);border:1px solid rgba(212,245,71,.3);box-shadow:0 10px 24px rgba(0,0,0,.35);opacity:0;transform:translateY(-6px) scale(.96);transition:opacity .18s ease,transform .18s ease;backdrop-filter:blur(10px);}
+        .fpost:hover .fpost-cost{opacity:1;transform:translateY(0) scale(1);}
+        .fpost-cost span{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;line-height:1;color:var(--accent);}
+        .fpost-cost small{font-size:9px;line-height:1.15;color:var(--dim);white-space:nowrap;}
         .fpost-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
         .fnames{flex:1;}
         .fname{height:7px;border-radius:3px;background:rgba(255,255,255,.2);margin-bottom:4px;}
@@ -370,14 +422,17 @@ export default function Home() {
         .ph-ss{font-size:9px;color:var(--dim);}
         .ph-alt-title{font-size:11px;font-weight:500;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;}
         .ph-alts{display:flex;flex-direction:column;gap:6px;}
-        .ph-alt{background:#1a1a18;border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s;border:1px solid transparent;}
-        .ph-alt:hover,.ph-alt.active{background:#222218;border-color:var(--accent);}
-        .ph-alt-e{font-size:1.4rem;flex-shrink:0;width:32px;text-align:center;}
+        .ph-alt{background:#1a1a18;border-radius:10px;padding:12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease;border:1px solid transparent;}
+        .ph-alt:hover,.ph-alt.active{background:#222218;border-color:var(--accent);transform:translateX(3px);box-shadow:0 14px 30px rgba(0,0,0,.24);}
+        .ph-alt-e{font-size:1.4rem;flex-shrink:0;width:32px;text-align:center;line-height:1.2;transition:transform .18s ease;}
+        .ph-alt:hover .ph-alt-e,.ph-alt.active .ph-alt-e{transform:scale(1.12);}
         .ph-alt-body{flex:1;}
         .ph-alt-name{font-size:.85rem;font-weight:500;margin-bottom:2px;}
         .ph-alt-desc{font-size:.75rem;color:var(--dim);line-height:1.4;}
-        .ph-alt-earned{font-size:.75rem;color:var(--accent);margin-top:4px;font-weight:500;}
-        .ph-alt-arr{font-size:.9rem;color:var(--dim);flex-shrink:0;}
+        .ph-alt-earned{max-height:0;overflow:hidden;opacity:0;transform:translateY(-4px);font-size:.75rem;color:var(--accent);margin-top:0;font-weight:500;line-height:1.35;transition:max-height .2s ease,opacity .18s ease,transform .18s ease,margin-top .18s ease;}
+        .ph-alt:hover .ph-alt-earned,.ph-alt.active .ph-alt-earned{max-height:36px;opacity:1;transform:translateY(0);margin-top:4px;}
+        .ph-alt-arr{font-size:.9rem;color:var(--dim);flex-shrink:0;transition:color .18s ease,transform .18s ease;}
+        .ph-alt:hover .ph-alt-arr,.ph-alt.active .ph-alt-arr{color:var(--accent);transform:rotate(-45deg);}
         .calc-cta{position:absolute;bottom:0;left:0;right:0;padding:12px 20px 24px;background:linear-gradient(to top,#0a0a08 70%,transparent);}
         .calc-cta-btn{width:100%;background:var(--accent);color:#0a0a08;border:none;border-radius:99px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 
@@ -414,8 +469,6 @@ export default function Home() {
     </main>
   );
 }
-
-
 
 
 
