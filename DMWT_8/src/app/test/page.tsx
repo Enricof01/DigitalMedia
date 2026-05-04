@@ -66,9 +66,13 @@ export default function Home() {
     const y = clamp((event.clientY - rect.top) / rect.height, 0, 1);
 
     phone.style.setProperty("--tilt-x", `${lerp(7, -7, y).toFixed(2)}deg`);
-    phone.style.setProperty("--tilt-y", `${lerp(-8, 8, x).toFixed(2)}deg`);
+    phone.style.setProperty("--tilt-y", `${lerp(-11, 11, x).toFixed(2)}deg`);
     phone.style.setProperty("--glare-x", `${(x * 100).toFixed(1)}%`);
     phone.style.setProperty("--glare-y", `${(y * 100).toFixed(1)}%`);
+    phone.style.setProperty("--edge-left", `${lerp(0.46, 0.08, x).toFixed(2)}`);
+    phone.style.setProperty("--edge-right", `${lerp(0.08, 0.42, x).toFixed(2)}`);
+    phone.parentElement?.style.setProperty("--shadow-x", `${lerp(24, -24, x).toFixed(1)}px`);
+    phone.parentElement?.style.setProperty("--shadow-y", `${lerp(18, 34, y).toFixed(1)}px`);
     phone.classList.add("is-hovered");
   }, []);
 
@@ -80,6 +84,10 @@ export default function Home() {
     phone.style.setProperty("--tilt-y", "0deg");
     phone.style.setProperty("--glare-x", "50%");
     phone.style.setProperty("--glare-y", "18%");
+    phone.style.setProperty("--edge-left", "0.18");
+    phone.style.setProperty("--edge-right", "0.18");
+    phone.parentElement?.style.setProperty("--shadow-x", "0px");
+    phone.parentElement?.style.setProperty("--shadow-y", "28px");
     phone.classList.remove("is-hovered");
     feedPausedRef.current = false;
   }, []);
@@ -163,6 +171,12 @@ export default function Home() {
       {/* ═══ STORY HERO ═══ */}
       <div className="story" ref={storyRef}>
         <div className="sticky">
+          <a className="brand-logo" href="/test" aria-label="Mindscroll">
+            <span className="brand-badge">
+              <span className="brand-phone" />
+            </span>
+            <span className="brand-word">MINDSCROLL</span>
+          </a>
           <div className="bg-word" ref={bgWordRef}>SCROLL</div>
           <div className="eyebrow-top">Eine Kampagne gegen die stille Zeitverschwendung
             
@@ -170,6 +184,7 @@ export default function Home() {
           
 
           <div className="phone-wrap">
+            <div className="phone-cast-shadow" />
             <div
               className="phone"
               ref={phoneRef}
@@ -352,12 +367,22 @@ export default function Home() {
 
         .story{position:relative;height:500vh;}
         .sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+        .brand-logo{position:absolute;top:22px;left:24px;z-index:40;display:inline-flex;align-items:center;height:46px;padding:4px 10px 4px 4px;background:#090907;border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.08);text-decoration:none;transform:translateZ(0);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;}
+        .brand-logo:hover{transform:translateY(-1px);border-color:rgba(212,245,71,.45);box-shadow:0 22px 48px rgba(0,0,0,.44),0 0 28px rgba(212,245,71,.1),inset 0 1px 0 rgba(255,255,255,.1);}
+        .brand-badge{position:relative;width:34px;height:38px;background:var(--accent);display:flex;align-items:flex-end;justify-content:flex-start;padding:5px;box-shadow:inset 0 0 0 1px rgba(10,10,8,.2);}
+        .brand-badge::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.24),transparent 42%);pointer-events:none;}
+        .brand-phone{position:relative;width:12px;height:17px;border:2px solid #10100e;border-radius:2px 2px 4px 4px;transform:rotate(-14deg);box-shadow:3px 2px 0 rgba(10,10,8,.3);}
+        .brand-phone::after{content:"";position:absolute;left:3px;right:3px;bottom:1px;height:2px;border-radius:99px;background:#10100e;}
+        .brand-word{font-family:'Bebas Neue',Impact,sans-serif;font-size:2.55rem;line-height:.88;color:#f0ede6;letter-spacing:.02em;margin-left:9px;text-shadow:2px 0 0 rgba(255,255,255,.14),0 1px 0 rgba(0,0,0,.9);}
         .bg-word{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:min(35vw,320px);color:rgba(255,255,255,.022);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;letter-spacing:-.02em;}
         .eyebrow-top{position:absolute;top:5vh;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);z-index:20;white-space:nowrap;}
 
-        .phone-wrap{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:5;pointer-events:none;perspective:1100px;}
-        .phone{position:relative;width:340px;height:734px;background:#111110;border-radius:44px;border:2px solid rgba(255,255,255,.15);box-shadow:0 0 0 1px rgba(255,255,255,.04),0 40px 120px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,255,255,.03);overflow:hidden;will-change:transform,width,height,border-radius;flex-shrink:0;pointer-events:auto;transform:rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg));transform-style:preserve-3d;transition:transform .22s ease,box-shadow .22s ease;}
-        .phone.is-hovered{box-shadow:0 0 0 1px rgba(255,255,255,.08),0 48px 135px rgba(0,0,0,.95),0 0 44px rgba(212,245,71,.08),inset 0 0 0 1px rgba(255,255,255,.05);}
+        .phone-wrap{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;z-index:5;pointer-events:none;perspective:1500px;perspective-origin:center;--shadow-x:0px;--shadow-y:28px;}
+        .phone-cast-shadow{position:absolute;width:min(390px,88vw);height:min(150px,28vh);border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.78),rgba(0,0,0,.34) 42%,transparent 72%);filter:blur(18px);transform:translate3d(var(--shadow-x),var(--shadow-y),-130px) rotateX(64deg) scale(.9);opacity:.82;transition:transform .2s ease,opacity .2s ease;}
+        .phone{position:relative;width:340px;height:734px;background:linear-gradient(115deg,#262620,#11110f 18%,#050504 58%,#1e1e1a);border-radius:44px;border:2px solid rgba(255,255,255,.18);box-shadow:0 0 0 1px rgba(255,255,255,.06),-18px 28px 42px rgba(0,0,0,.42),24px 46px 92px rgba(0,0,0,.86),0 70px 150px rgba(0,0,0,.72),inset 10px 0 18px rgba(255,255,255,.05),inset -14px 0 22px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.04);overflow:hidden;will-change:transform,width,height,border-radius;flex-shrink:0;pointer-events:auto;transform:rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg)) translateZ(32px);transform-style:preserve-3d;transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;}
+        .phone::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:26;pointer-events:none;background:linear-gradient(90deg,rgba(255,255,255,var(--edge-left,.18)),transparent 11%,transparent 84%,rgba(255,255,255,var(--edge-right,.18))),linear-gradient(180deg,rgba(255,255,255,.18),transparent 12%,transparent 84%,rgba(0,0,0,.48));mix-blend-mode:screen;opacity:.42;}
+        .phone::after{content:"";position:absolute;inset:10px;border-radius:34px;z-index:25;pointer-events:none;box-shadow:inset 12px 0 18px rgba(255,255,255,.05),inset -18px 0 32px rgba(0,0,0,.62),inset 0 22px 28px rgba(255,255,255,.03),inset 0 -22px 34px rgba(0,0,0,.42);}
+        .phone.is-hovered{filter:saturate(1.05) contrast(1.03);box-shadow:0 0 0 1px rgba(255,255,255,.12),-24px 34px 54px rgba(0,0,0,.5),32px 54px 112px rgba(0,0,0,.92),0 85px 170px rgba(0,0,0,.8),0 0 52px rgba(212,245,71,.11),inset 13px 0 20px rgba(255,255,255,.07),inset -18px 0 26px rgba(0,0,0,.62),inset 0 0 0 1px rgba(255,255,255,.06);}
         .phone-glow{position:absolute;inset:-5px;border-radius:49px;border:2px solid var(--accent);opacity:0;pointer-events:none;box-shadow:0 0 25px 5px rgba(212,245,71,.2);}
         .phone-shine{position:absolute;inset:1px;border-radius:inherit;z-index:24;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--glare-x,50%) var(--glare-y,18%),rgba(255,255,255,.28),rgba(212,245,71,.11) 16%,rgba(255,255,255,.04) 31%,transparent 48%);mix-blend-mode:screen;transition:opacity .18s ease;}
         .phone.is-hovered .phone-shine{opacity:.9;}
@@ -465,11 +490,16 @@ export default function Home() {
         .footer-inner{max-width:700px;margin:0 auto;display:flex;flex-direction:column;gap:.75rem;}
         .footer-logo{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent);letter-spacing:.05em;}
         .footer-text{font-size:.8rem;color:var(--dim);line-height:1.7;}
+        @media (max-width:700px){
+          .brand-logo{top:16px;left:16px;height:38px;padding:3px 8px 3px 3px;}
+          .brand-badge{width:28px;height:32px;padding:4px;}
+          .brand-phone{width:10px;height:15px;}
+          .brand-word{font-size:2rem;margin-left:7px;}
+          .eyebrow-top{top:68px;width:100%;padding:0 16px;text-align:center;white-space:normal;line-height:1.5;}
+        }
       `}</style>
     </main>
   );
 }
-
-
 
 
