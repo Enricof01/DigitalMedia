@@ -70,7 +70,7 @@ const POSTS = [
     likes: "22.118",
     comments: "502",
     saves: "3.771",
-    pressure: "Speichern fuer spaeter",
+    pressure: "Speichern für spaeter",
     caption: "eigentlich wolltest du nur eine Nachricht checken",
     photo: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=560&q=80",
   },
@@ -99,7 +99,7 @@ const POSTS = [
     comments: "3.492",
     saves: "10.870",
     pressure: "Das koennte wichtig sein",
-    caption: "gespeichert fuer spaeter, vergessen fuer immer",
+    caption: "gespeichert für spaeter, vergessen für immer",
     photo: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=560&q=80",
   },
   {
@@ -127,7 +127,7 @@ const POSTS = [
     comments: "768",
     saves: "2.661",
     pressure: "Noch 7 Sekunden",
-    caption: "du bist nicht muede, du bist ueberreizt",
+    caption: "du bist nicht müde, du bist überreizt",
     photo: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=560&q=80",
   },
   {

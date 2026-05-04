@@ -10,7 +10,7 @@ const APP_STEPS: Record<string, string> = {
   TikTok: "TikTok heute aus dem Homescreen ziehen und erst nach der Challenge wieder oeffnen.",
   Instagram: "Instagram heute in einen Ordner auf die letzte Seite verschieben.",
   YouTube: "YouTube-Autoplay ausschalten und nur eine bewusste Suche erlauben.",
-  WhatsApp: "WhatsApp-Benachrichtigungen fuer Gruppen bis morgen stumm schalten.",
+  WhatsApp: "WhatsApp-Benachrichtigungen für Gruppen bis morgen stumm schalten.",
 };
 
 const MOMENT_STEPS: Record<string, string> = {
@@ -57,9 +57,9 @@ export default function SurveySection() {
     Math.min(100, Math.round((dailyMinutes / 720) * 62 + (pickups / 250) * 38)),
   );
   const planSteps = useMemo(() => [
-    APP_STEPS[mainApp] ?? "Die staerkste App fuer 24 Stunden bewusst ausbremsen.",
+    APP_STEPS[mainApp] ?? "Die staerkste App für 24 Stunden bewusst ausbremsen.",
     MOMENT_STEPS[hardestMoment] ?? "Den schwierigsten Moment heute ohne Feed starten.",
-    GOAL_STEPS[goal] ?? "Einen kleinen, messbaren Schritt fuer heute festlegen.",
+    GOAL_STEPS[goal] ?? "Einen kleinen, messbaren Schritt für heute festlegen.",
   ], [goal, hardestMoment, mainApp]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -120,7 +120,7 @@ export default function SurveySection() {
                   <div className="survey-result-grid">
                     <div>
                       <strong>{possibleBooks}</strong>
-                      <span>Buecher</span>
+                      <span>Bücher</span>
                     </div>
                     <div>
                       <strong>{possibleWorkouts}</strong>
@@ -128,7 +128,7 @@ export default function SurveySection() {
                     </div>
                   </div>
                   <div className="survey-plan">
-                    <div className="survey-plan-title">Dein Plan fuer heute</div>
+                    <div className="survey-plan-title">Dein Plan für heute</div>
                     {planSteps.map((step, index) => (
                       <div className="survey-plan-step" key={step}>
                         <span>{index + 1}</span>
@@ -211,7 +211,7 @@ export default function SurveySection() {
                   </fieldset>
 
                   <fieldset className="survey-group">
-                    <legend>Was willst du zurueckholen?</legend>
+                    <legend>Was willst du zurückholen?</legend>
                     <div className="survey-options two">
                       {GOALS.map((item) => (
                         <button
