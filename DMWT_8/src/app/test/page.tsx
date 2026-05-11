@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, type PointerEvent } from "react";
+import { useState, useEffect, useRef, useCallback, type CSSProperties, type PointerEvent } from "react";
 import CreatedBy from "@/components/CreatedBy";
 import SurveySection from "@/components/SurveySection";
 
@@ -196,9 +196,11 @@ export default function Home() {
   const rafRef       = useRef<number>(0);
 
   const yr = Math.round(hours * 365);
-  const scrollDays = Math.round(yr / 16);
-  const activeDays = Math.min(365, scrollDays);
+  const lostDays = yr / 24;
+  const lostDaysDisplay = lostDays.toLocaleString("de-DE", { maximumFractionDigits: 1 });
+  const activeDays = Math.min(365, Math.round(lostDays));
   const yearCells = Array.from({ length: 365 }, (_, index) => index < activeDays);
+  const clockAngle = (hours / 10) * 360;
   const potential = [
     { label: "Bücher", value: Math.max(1, Math.floor(yr / 8)), unit: "lesen", max: 460 },
     { label: "Workouts", value: Math.max(1, Math.floor(yr)), unit: "machen", max: 3650 },
@@ -215,6 +217,19 @@ export default function Home() {
     if (layerFeedRef.current) { layerFeedRef.current.style.opacity = String(feed); layerFeedRef.current.style.pointerEvents = feed > 0.5 ? "auto" : "none"; }
     if (layerRevRef.current)  layerRevRef.current.style.opacity  = String(reveal);
     if (layerCalcRef.current) { layerCalcRef.current.style.opacity = String(calc);  layerCalcRef.current.style.pointerEvents = calc > 0.5 ? "auto" : "none"; }
+  }, []);
+
+  const setHoursFromClock = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const x = event.clientX - centerX;
+    const y = event.clientY - centerY;
+    const degrees = (Math.atan2(x, -y) * 180) / Math.PI;
+    const normalized = (degrees + 360) % 360;
+    const nextHours = Math.round((normalized / 360) * 10 * 2) / 2;
+
+    setHours(nextHours < 0.5 ? 10 : nextHours);
   }, []);
 
   const onPhonePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
@@ -594,18 +609,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ TRUTH ═══ */}
-      <section className="truth">
-        <div className="truth-inner">
-          <div className="truth-q">&quot;Die Apps sind dafür gebaut, dich <strong>nicht loszulassen</strong>. Jedes Mal wenn du scrollst, wird ein Algorithmus klüger. Du nicht.&quot;</div>
-          <div className="truth-row">
-            <div className="truth-s"><span className="truth-n">2,5h</span><span className="truth-d">Deutsche scrollen täglich auf Social Media</span></div>
-            <div className="truth-s"><span className="truth-n">38 Tage</span><span className="truth-d">pro Jahr wach, bewusst, weggescrollt</span></div>
-            <div className="truth-s"><span className="truth-n">0</span><span className="truth-d">Erinnerungen die du wirklich behalten wirst</span></div>
-          </div>
-        </div>
-      </section>
-
       {/* ═══ CHALLENGE ═══ */}
       <section className="challenge">
         <div className="ch-inner">
@@ -613,15 +616,48 @@ export default function Home() {
             <div className="ch-eyebrow">Bereit?</div>
             <h2 className="ch-title">Hol dir heute<br /><span className="ch-accent">60 Minuten</span><br />zurück.</h2>
             <p className="ch-body">Leg das Handy weg. Nicht für immer. Aber heute, für eine Stunde. Schau wie weit du kommst.</p>
-            <div className="ch-box">
-              <div style={{ fontWeight: 500, marginBottom: "1rem", fontSize: ".95rem" }}>Heute 60 Minuten zurückholen</div>
-              <ul className="ch-list">
-                <li>Handy nach 21 Uhr in eine Schublade</li>
-                <li>Social-Media-Apps aus dem Homescreen</li>
-                <li>Jeden Abend eine Alternative aus der Liste</li>
-                <li>Am Ende: Notiere wie du dich fühlst</li>
-              </ul>
-              <a className="ch-cta" href="#survey">Umfrage starten</a>
+            <div
+              className="time-dial"
+              role="slider"
+              aria-label="Social-Media-Zeit pro Tag über Uhr einstellen"
+              aria-valuemin={0.5}
+              aria-valuemax={10}
+              aria-valuenow={hours}
+              aria-valuetext={`${hours.toLocaleString("de-DE")} Stunden pro Tag`}
+              tabIndex={0}
+              style={{ "--clock-angle": `${clockAngle}deg` } as CSSProperties}
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                setHoursFromClock(event);
+              }}
+              onPointerMove={(event) => {
+                if (event.buttons === 1) setHoursFromClock(event);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowRight" || event.key === "ArrowUp") setHours((value) => Math.min(10, value + 0.5));
+                if (event.key === "ArrowLeft" || event.key === "ArrowDown") setHours((value) => Math.max(0.5, value - 0.5));
+              }}
+            >
+              <div className="dial-face">
+                {Array.from({ length: 10 }, (_, index) => (
+                  <span
+                    key={index}
+                    className="dial-tick"
+                    style={{ transform: `rotate(${index * 36}deg)` }}
+                  >
+                    <i style={{ transform: `translateX(-50%) rotate(${-index * 36}deg)` }}>{index === 0 ? 10 : index}</i>
+                  </span>
+                ))}
+                <div className="dial-track" />
+                <div className="dial-hand" style={{ transform: `rotate(${clockAngle}deg)` }}>
+                  <span />
+                </div>
+                <div className="dial-center">
+                  <strong>{hours.toLocaleString("de-DE")}h</strong>
+                  <small>pro Tag</small>
+                </div>
+              </div>
+              <div className="dial-hint">Zeiger ziehen</div>
             </div>
           </div>
           <aside className="impact-graphic" aria-label="Interaktive Infografik zum Zeitverlust">
@@ -630,7 +666,7 @@ export default function Home() {
                 <span className="impact-kicker">Infografik</span>
                 <h3>Dein verlorenes Jahr</h3>
               </div>
-              <strong>{scrollDays}<small>Tage</small></strong>
+              <strong>{lostDaysDisplay}<small>Tage</small></strong>
             </div>
             <label className="impact-slider">
               <span><b>{hours.toLocaleString("de-DE")}h</b> Social Media pro Tag</span>
@@ -646,15 +682,15 @@ export default function Home() {
             </label>
             <div className="impact-math">
               <div><strong>{yr.toLocaleString("de-DE")}</strong><span>Stunden pro Jahr</span></div>
-              <div><strong>{scrollDays}</strong><span>wache Tage weg</span></div>
+              <div><strong>{lostDaysDisplay}</strong><span>24h-Tage weg</span></div>
             </div>
-            <div className="year-map" aria-label={`${activeDays} von 365 Jahrestagen markiert`}>
+            <div className="year-map" aria-label={`${lostDaysDisplay} von 365 Jahrestagen markiert`}>
               {yearCells.map((isActive, index) => (
                 <span key={index} className={isActive ? "active" : ""} />
               ))}
             </div>
             <p className="impact-caption">
-              Jede helle Kachel steht für einen wachen Tag, der im Feed verschwinden kann.
+              Jede helle Kachel steht für einen 24-Stunden-Tag, der im Feed verschwinden kann.
             </p>
             <div className="impact-options">
               <div className="impact-option-head">Was daraus werden könnte</div>
@@ -884,14 +920,6 @@ export default function Home() {
         .recall-grid div{border:1px solid rgba(16,20,13,.12);background:rgba(255,255,255,.34);border-radius:10px;padding:18px 16px;box-shadow:0 18px 46px rgba(40,50,30,.1);}
         .recall-grid strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:3.2rem;line-height:.9;color:#10140d;font-weight:400;}
         .recall-grid span{display:block;margin-top:8px;font-size:.82rem;color:#52613c;}
-        .truth{padding:5rem 2rem;border-top:1px solid rgba(255,255,255,.12);background:#252c1d;}
-        .truth-inner{max-width:700px;margin:0 auto;border-left:3px solid var(--accent2);padding-left:2rem;}
-        .truth-q{font-family:'DM Serif Display',serif;font-size:clamp(1.2rem,3vw,2rem);line-height:1.5;margin-bottom:2rem;}
-        .truth-row{display:flex;flex-wrap:wrap;gap:2rem;}
-        .truth-s{display:flex;flex-direction:column;gap:.4rem;}
-        .truth-n{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--accent2);line-height:1;}
-        .truth-d{font-size:.85rem;color:var(--dim);max-width:160px;line-height:1.4;}
-
         .challenge{padding:5rem 2rem;border-top:1px solid rgba(255,255,255,.12);background:#293120;}
         .ch-inner{max-width:1220px;margin:0 auto;display:grid;grid-template-columns:minmax(360px,.85fr) minmax(420px,1.15fr);gap:clamp(2rem,5vw,4rem);align-items:center;}
         .challenge-copy{min-width:0;}
@@ -899,12 +927,24 @@ export default function Home() {
         .ch-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,8vw,6rem);line-height:.9;letter-spacing:-.02em;margin-bottom:1.5rem;}
         .ch-accent{color:var(--accent);}
         .ch-body{font-size:.95rem;color:var(--dim);line-height:1.7;margin-bottom:2rem;}
-        .ch-box{border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:1.5rem;background:#343c29;}
-        .ch-list{list-style:none;display:flex;flex-direction:column;gap:.7rem;}
-        .ch-list li{font-size:.9rem;color:var(--dim);padding-left:1.25rem;position:relative;}
-        .ch-list li::before{content:"→";position:absolute;left:0;color:var(--accent);}
-        .ch-cta{display:inline-flex;align-items:center;justify-content:center;margin-top:1.25rem;background:var(--accent);color:#10120d;text-decoration:none;border-radius:99px;padding:12px 20px;font-size:.9rem;font-weight:700;box-shadow:0 14px 34px rgba(212,245,71,.2);transition:transform .18s ease,box-shadow .18s ease;}
-        .ch-cta:hover{transform:translateY(-1px);box-shadow:0 18px 44px rgba(212,245,71,.28);}
+        .time-dial{width:min(360px,100%);margin:0 0 1.7rem;touch-action:none;cursor:grab;user-select:none;outline:none;}
+        .time-dial:active{cursor:grabbing;}
+        .time-dial:focus-visible .dial-face{box-shadow:0 0 0 3px rgba(212,245,71,.35),0 28px 70px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.14);}
+        .dial-face{position:relative;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 48% 42%,#465136 0%,#313b28 47%,#202819 73%,#151b12 100%);border:1px solid rgba(212,245,71,.28);box-shadow:0 28px 70px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -18px 36px rgba(0,0,0,.28);overflow:hidden;}
+        .dial-face::before{content:"";position:absolute;inset:11%;border-radius:50%;border:1px solid rgba(247,242,232,.12);box-shadow:inset 0 0 30px rgba(212,245,71,.05);}
+        .dial-face::after{content:"";position:absolute;inset:22%;border-radius:50%;background:radial-gradient(circle,rgba(212,245,71,.16),transparent 64%);filter:blur(14px);}
+        .dial-track{position:absolute;inset:8%;border-radius:50%;background:conic-gradient(var(--accent) 0deg, var(--accent) var(--clock-angle, 180deg), rgba(247,242,232,.12) var(--clock-angle, 180deg), rgba(247,242,232,.12) 360deg);-webkit-mask:radial-gradient(circle,transparent 60%,#000 61%);mask:radial-gradient(circle,transparent 60%,#000 61%);opacity:.95;}
+        .dial-tick{position:absolute;left:50%;top:4%;width:1px;height:46%;transform-origin:50% 100%;z-index:2;}
+        .dial-tick::before{content:"";position:absolute;left:-1px;top:0;width:3px;height:12px;border-radius:99px;background:rgba(247,242,232,.35);}
+        .dial-tick i{position:absolute;top:18px;left:50%;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;font-style:normal;color:rgba(247,242,232,.7);}
+        .dial-hand{position:absolute;left:50%;top:50%;width:0;height:0;transform-origin:50% 50%;z-index:4;}
+        .dial-hand span{position:absolute;left:-5px;bottom:0;width:10px;height:38vmin;max-height:136px;border-radius:99px 99px 6px 6px;background:linear-gradient(180deg,var(--accent),#f4ffc5);box-shadow:0 0 24px rgba(212,245,71,.36);}
+        .dial-hand span::before{content:"";position:absolute;left:50%;bottom:-13px;width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid #f7f2e8;transform:translateX(-50%);box-shadow:0 6px 18px rgba(0,0,0,.18);}
+        .dial-center{position:absolute;left:50%;top:50%;z-index:5;width:118px;height:118px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:translate(-50%,-50%);background:#f7f2e8;color:#10140d;box-shadow:0 16px 42px rgba(0,0,0,.24),inset 0 0 0 1px rgba(16,20,13,.08);}
+        .dial-center strong{font-family:'Bebas Neue',sans-serif;font-size:3rem;line-height:.85;font-weight:400;}
+        .dial-center small{font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:#5d6b40;}
+        .dial-hint{display:inline-flex;align-items:center;gap:.45rem;margin-top:.7rem;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);}
+        .dial-hint::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px rgba(212,245,71,.5);}
         .impact-graphic{position:relative;overflow:hidden;border:1px solid rgba(212,245,71,.3);border-radius:12px;padding:1.25rem;background:linear-gradient(135deg,rgba(247,242,232,.97),rgba(222,235,178,.93));color:#10140d;box-shadow:0 34px 80px rgba(0,0,0,.24),0 0 46px rgba(212,245,71,.1);}
         .impact-graphic::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(16,20,13,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(16,20,13,.05) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(145deg,rgba(0,0,0,.85),transparent 72%);pointer-events:none;}
         .impact-graphic>*{position:relative;z-index:1;}

@@ -31,7 +31,7 @@ export default function CreatedBy() {
       alignItems: "center",
       flexWrap: "wrap"
     }}>
-      <span>Created by</span>
+      <span>Created by Enrico, Marvin und Elias</span>
       {users.map((user, i) => (
         <span key={user.id}>
           <span style={{ color: "var(--accent)" }}>{user.name}</span>
