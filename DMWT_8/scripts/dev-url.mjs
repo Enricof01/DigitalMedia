@@ -1,5 +1,6 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { createServer } from "node:net";
 
 const testPath = "/test";
 const localUrlPattern = /https?:\/\/localhost:\d+/;
@@ -11,6 +12,46 @@ let studioBuffer = "";
 let printedStudioUrl = false;
 let childExited = false;
 let shuttingDown = false;
+let prismaStudio = null;
+
+function command(name) {
+  return process.platform === "win32" ? `${name}.cmd` : name;
+}
+
+function sleep(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function runSetup(label, cmd, args, options = {}) {
+  const { retries = 0, retryDelayMs = 1500, fatal = false, ...spawnOptions } = options;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    process.stdout.write(`- ${label}${attempt > 0 ? ` (Versuch ${attempt + 1}/${retries + 1})` : ""}...\n`);
+
+    const result = spawnSync(cmd, args, {
+      stdio: "inherit",
+      shell: process.platform === "win32",
+      ...spawnOptions,
+    });
+
+    if (result.status === 0) return true;
+
+    if (attempt < retries) {
+      process.stdout.write("- Datenbank ist noch nicht bereit, versuche es gleich erneut.\n");
+      sleep(retryDelayMs);
+      continue;
+    }
+
+    process.stderr.write(`- ${label} fehlgeschlagen.\n`);
+    if (fatal) {
+      process.exit(result.status ?? 1);
+    }
+
+    return false;
+  }
+
+  return false;
+}
 
 function getDatabaseLabel() {
   try {
@@ -26,19 +67,49 @@ function getDatabaseLabel() {
   }
 }
 
+function canListenOnPort(port) {
+  return new Promise((resolve) => {
+    const server = createServer();
+
+    server.once("error", () => resolve(false));
+    server.once("listening", () => {
+      server.close(() => resolve(true));
+    });
+
+    server.listen(port);
+  });
+}
+
+const databaseStarted = runSetup("Starte Datenbank-Container", "docker", ["compose", "up", "-d"]);
+
+if (databaseStarted) {
+  runSetup("Wende Datenbank-Migrationen an", command("npx"), ["prisma", "migrate", "deploy"], {
+    retries: 8,
+    retryDelayMs: 1500,
+  });
+} else {
+  process.stderr.write("- Datenbank-Container wurde nicht gestartet. Die Webseite startet trotzdem.\n");
+  process.stderr.write("- Falls die Umfrage speichern soll: Docker Desktop starten und danach npm run dev erneut ausfuehren.\n");
+}
+
 process.stdout.write(`- Datenbank:     ${getDatabaseLabel()}\n`);
 process.stdout.write(`- DB-Webansicht: http://localhost:${studioPort}\n`);
 
-const nextDev = spawn("next", ["dev"], {
+const nextDev = spawn(command("next"), ["dev"], {
   detached: process.platform !== "win32",
   stdio: ["inherit", "pipe", "pipe"],
 });
 
-const prismaStudio = spawn("prisma", ["studio", "--port", studioPort, "--browser", "none"], {
-  detached: process.platform !== "win32",
-  env: { ...process.env, BROWSER: "none" },
-  stdio: ["ignore", "pipe", "pipe"],
-});
+if (await canListenOnPort(Number(studioPort))) {
+  prismaStudio = spawn(command("prisma"), ["studio", "--port", studioPort, "--browser", "none"], {
+    detached: process.platform !== "win32",
+    env: { ...process.env, BROWSER: "none" },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+} else {
+  printedStudioUrl = true;
+  process.stdout.write(`- Prisma Studio: http://localhost:${studioPort} (laeuft bereits)\n`);
+}
 
 function pipeWithTestUrl(stream, output) {
   stream.on("data", (chunk) => {
@@ -74,18 +145,27 @@ function pipeWithStudioUrl(stream, output) {
 
 pipeWithTestUrl(nextDev.stdout, process.stdout);
 pipeWithTestUrl(nextDev.stderr, process.stderr);
-pipeWithStudioUrl(prismaStudio.stdout, process.stdout);
-pipeWithStudioUrl(prismaStudio.stderr, process.stderr);
 
-prismaStudio.on("error", () => {
-  process.stderr.write("- Prisma Studio konnte nicht gestartet werden. Nutze alternativ: npx prisma studio\n");
+if (prismaStudio) {
+  pipeWithStudioUrl(prismaStudio.stdout, process.stdout);
+  pipeWithStudioUrl(prismaStudio.stderr, process.stderr);
+
+  prismaStudio.on("error", () => {
+    process.stderr.write("- Prisma Studio konnte nicht gestartet werden. Nutze alternativ: npx prisma studio\n");
+  });
+}
+
+nextDev.on("error", (error) => {
+  process.stderr.write(`- Next.js konnte nicht gestartet werden: ${error.message}\n`);
+  stopNextDev("SIGTERM");
+  process.exit(1);
 });
 
 function stopNextDev(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
 
-  [nextDev, prismaStudio].forEach((child) => {
+  [nextDev, prismaStudio].filter(Boolean).forEach((child) => {
     if (!child.pid) return;
 
     try {
@@ -102,7 +182,7 @@ function stopNextDev(signal) {
   setTimeout(() => {
     if (childExited) return;
 
-    [nextDev, prismaStudio].forEach((child) => {
+    [nextDev, prismaStudio].filter(Boolean).forEach((child) => {
       if (!child.pid) return;
 
       try {

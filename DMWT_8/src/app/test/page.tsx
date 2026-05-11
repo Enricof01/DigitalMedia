@@ -196,6 +196,15 @@ export default function Home() {
   const rafRef       = useRef<number>(0);
 
   const yr = Math.round(hours * 365);
+  const scrollDays = Math.round(yr / 16);
+  const activeDays = Math.min(365, scrollDays);
+  const yearCells = Array.from({ length: 365 }, (_, index) => index < activeDays);
+  const potential = [
+    { label: "Bücher", value: Math.max(1, Math.floor(yr / 8)), unit: "lesen", max: 460 },
+    { label: "Workouts", value: Math.max(1, Math.floor(yr)), unit: "machen", max: 3650 },
+    { label: "Spaziergänge", value: Math.max(1, Math.floor(yr / 1.5)), unit: "30 Min", max: 2450 },
+    { label: "Sprachstunden", value: Math.max(1, Math.round(yr)), unit: "üben", max: 3650 },
+  ];
   const thumbKm = ((hours * 60 * 20) / 1000).toFixed(1);
   const recoveryMode = timeDebt >= 50;
   const timeAccountTitle = recoveryMode ? "Zeitkonto" : "Zeitverlust";
@@ -508,7 +517,7 @@ export default function Home() {
                           <span className="ph-val">{hours % 1 === 0 ? hours : hours.toFixed(1)}</span>
                           <span className="ph-unit">Stunden / Tag</span>
                         </div>
-                        <input type="range" className="ph-range" min={0.5} max={8} step={0.5} value={hours}
+                        <input type="range" className="ph-range" min={0.5} max={10} step={0.5} value={hours}
                           onChange={e => setHours(Number(e.target.value))} />
                         <div className="range-ends"><span>30 Min</span><span>8 Std</span></div>
 
@@ -600,19 +609,66 @@ export default function Home() {
       {/* ═══ CHALLENGE ═══ */}
       <section className="challenge">
         <div className="ch-inner">
-          <div className="ch-eyebrow">Bereit?</div>
-          <h2 className="ch-title">Hol dir heute<br /><span className="ch-accent">60 Minuten</span><br />zurück.</h2>
-          <p className="ch-body">Leg das Handy weg. Nicht für immer. Aber heute, für eine Stunde. Schau wie weit du kommst.</p>
-          <div className="ch-box">
-            <div style={{ fontWeight: 500, marginBottom: "1rem", fontSize: ".95rem" }}>Heute 60 Minuten zurückholen</div>
-            <ul className="ch-list">
-              <li>Handy nach 21 Uhr in eine Schublade</li>
-              <li>Social-Media-Apps aus dem Homescreen</li>
-              <li>Jeden Abend eine Alternative aus der Liste</li>
-              <li>Am Ende: Notiere wie du dich fühlst</li>
-            </ul>
-            <a className="ch-cta" href="#survey">Umfrage starten</a>
+          <div className="challenge-copy">
+            <div className="ch-eyebrow">Bereit?</div>
+            <h2 className="ch-title">Hol dir heute<br /><span className="ch-accent">60 Minuten</span><br />zurück.</h2>
+            <p className="ch-body">Leg das Handy weg. Nicht für immer. Aber heute, für eine Stunde. Schau wie weit du kommst.</p>
+            <div className="ch-box">
+              <div style={{ fontWeight: 500, marginBottom: "1rem", fontSize: ".95rem" }}>Heute 60 Minuten zurückholen</div>
+              <ul className="ch-list">
+                <li>Handy nach 21 Uhr in eine Schublade</li>
+                <li>Social-Media-Apps aus dem Homescreen</li>
+                <li>Jeden Abend eine Alternative aus der Liste</li>
+                <li>Am Ende: Notiere wie du dich fühlst</li>
+              </ul>
+              <a className="ch-cta" href="#survey">Umfrage starten</a>
+            </div>
           </div>
+          <aside className="impact-graphic" aria-label="Interaktive Infografik zum Zeitverlust">
+            <div className="impact-top">
+              <div>
+                <span className="impact-kicker">Infografik</span>
+                <h3>Dein verlorenes Jahr</h3>
+              </div>
+              <strong>{scrollDays}<small>Tage</small></strong>
+            </div>
+            <label className="impact-slider">
+              <span><b>{hours.toLocaleString("de-DE")}h</b> Social Media pro Tag</span>
+              <input
+                type="range"
+                min={0.5}
+                max={10}
+                step={0.5}
+                value={hours}
+                onChange={(event) => setHours(Number(event.target.value))}
+                aria-label="Social-Media-Stunden pro Tag"
+              />
+            </label>
+            <div className="impact-math">
+              <div><strong>{yr.toLocaleString("de-DE")}</strong><span>Stunden pro Jahr</span></div>
+              <div><strong>{scrollDays}</strong><span>wache Tage weg</span></div>
+            </div>
+            <div className="year-map" aria-label={`${activeDays} von 365 Jahrestagen markiert`}>
+              {yearCells.map((isActive, index) => (
+                <span key={index} className={isActive ? "active" : ""} />
+              ))}
+            </div>
+            <p className="impact-caption">
+              Jede helle Kachel steht für einen wachen Tag, der im Feed verschwinden kann.
+            </p>
+            <div className="impact-options">
+              <div className="impact-option-head">Was daraus werden könnte</div>
+              {potential.map((item) => (
+                <div className="impact-option" key={item.label}>
+                  <div>
+                    <strong>{item.value.toLocaleString("de-DE")}</strong>
+                    <span>{item.label} {item.unit}</span>
+                  </div>
+                  <i style={{ width: `${Math.min(100, (item.value / item.max) * 100)}%` }} />
+                </div>
+              ))}
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -837,7 +893,8 @@ export default function Home() {
         .truth-d{font-size:.85rem;color:var(--dim);max-width:160px;line-height:1.4;}
 
         .challenge{padding:5rem 2rem;border-top:1px solid rgba(255,255,255,.12);background:#293120;}
-        .ch-inner{max-width:700px;margin:0 auto;}
+        .ch-inner{max-width:1220px;margin:0 auto;display:grid;grid-template-columns:minmax(360px,.85fr) minmax(420px,1.15fr);gap:clamp(2rem,5vw,4rem);align-items:center;}
+        .challenge-copy{min-width:0;}
         .ch-eyebrow{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
         .ch-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,8vw,6rem);line-height:.9;letter-spacing:-.02em;margin-bottom:1.5rem;}
         .ch-accent{color:var(--accent);}
@@ -848,11 +905,43 @@ export default function Home() {
         .ch-list li::before{content:"→";position:absolute;left:0;color:var(--accent);}
         .ch-cta{display:inline-flex;align-items:center;justify-content:center;margin-top:1.25rem;background:var(--accent);color:#10120d;text-decoration:none;border-radius:99px;padding:12px 20px;font-size:.9rem;font-weight:700;box-shadow:0 14px 34px rgba(212,245,71,.2);transition:transform .18s ease,box-shadow .18s ease;}
         .ch-cta:hover{transform:translateY(-1px);box-shadow:0 18px 44px rgba(212,245,71,.28);}
+        .impact-graphic{position:relative;overflow:hidden;border:1px solid rgba(212,245,71,.3);border-radius:12px;padding:1.25rem;background:linear-gradient(135deg,rgba(247,242,232,.97),rgba(222,235,178,.93));color:#10140d;box-shadow:0 34px 80px rgba(0,0,0,.24),0 0 46px rgba(212,245,71,.1);}
+        .impact-graphic::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(16,20,13,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(16,20,13,.05) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(145deg,rgba(0,0,0,.85),transparent 72%);pointer-events:none;}
+        .impact-graphic>*{position:relative;z-index:1;}
+        .impact-top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;}
+        .impact-kicker{display:block;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5d6b40;margin-bottom:.35rem;}
+        .impact-top h3{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,3.5vw,3rem);line-height:1;margin:0;color:#10140d;}
+        .impact-top strong{display:flex;flex-direction:column;align-items:flex-end;font-family:'Bebas Neue',sans-serif;font-size:4.5rem;line-height:.75;font-weight:400;color:#293120;text-shadow:0 10px 26px rgba(41,49,32,.12);}
+        .impact-top small{font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#5d6b40;text-shadow:none;margin-top:.45rem;}
+        .impact-slider{display:block;border:1px solid rgba(16,20,13,.12);background:rgba(255,255,255,.34);border-radius:10px;padding:.85rem;margin-bottom:.8rem;}
+        .impact-slider span{display:flex;justify-content:space-between;gap:1rem;font-size:.8rem;color:#52613c;margin-bottom:.7rem;}
+        .impact-slider b{font-family:'Bebas Neue',sans-serif;font-size:1.75rem;line-height:.8;color:#10140d;font-weight:400;}
+        .impact-slider input{width:100%;accent-color:#d4f547;cursor:pointer;}
+        .impact-math{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin:1rem 0;}
+        .impact-math div{border-radius:10px;padding:.95rem;background:#293120;color:var(--text);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);}
+        .impact-math strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:3rem;line-height:.85;color:var(--accent);font-weight:400;}
+        .impact-math span{display:block;margin-top:.35rem;font-size:.78rem;color:rgba(247,242,232,.72);}
+        .year-map{display:grid;grid-template-columns:repeat(31,1fr);gap:3px;padding:.85rem;background:rgba(16,20,13,.08);border:1px solid rgba(16,20,13,.08);border-radius:10px;}
+        .year-map span{aspect-ratio:1;border-radius:2px;background:rgba(16,20,13,.16);transition:background .2s ease,box-shadow .2s ease,transform .2s ease;}
+        .year-map span.active{background:#d4f547;box-shadow:0 0 10px rgba(212,245,71,.45);}
+        .impact-graphic:hover .year-map span.active:nth-child(4n){transform:translateY(-1px);}
+        .impact-caption{font-size:.78rem;color:#52613c;line-height:1.55;margin:.75rem 0 1rem;}
+        .impact-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;}
+        .impact-option-head{grid-column:1/-1;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5d6b40;}
+        .impact-option{position:relative;overflow:hidden;border-radius:9px;background:rgba(16,20,13,.09);padding:.75rem .8rem;border:1px solid rgba(16,20,13,.08);}
+        .impact-option strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:2.15rem;line-height:.9;color:#10140d;font-weight:400;}
+        .impact-option span{display:block;margin-top:.25rem;font-size:.73rem;color:#52613c;}
+        .impact-option i{position:absolute;left:0;bottom:0;height:3px;background:#10140d;border-radius:0 99px 99px 0;}
 
         .site-footer{padding:3rem 2rem;border-top:1px solid rgba(255,255,255,.12);background:#202619;}
         .footer-inner{max-width:700px;margin:0 auto;display:flex;flex-direction:column;gap:.75rem;}
         .footer-logo{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent);letter-spacing:.05em;}
         .footer-text{font-size:.8rem;color:var(--dim);line-height:1.7;}
+        @media (max-width:980px){
+          .ch-inner{grid-template-columns:1fr;align-items:start;}
+          .impact-graphic{max-width:760px;width:100%;}
+          .year-map{grid-template-columns:repeat(25,1fr);}
+        }
         @media (max-width:700px){
           .brand-logo{top:16px;left:16px;height:38px;padding:3px 8px 3px 3px;}
           .brand-badge{width:28px;height:32px;padding:4px;}
@@ -869,6 +958,14 @@ export default function Home() {
           .eyebrow-top{top:112px;width:100%;padding:0 16px;text-align:center;white-space:normal;line-height:1.5;}
           .recall-grid{grid-template-columns:1fr;}
           .recall-break{padding:4rem 1.1rem;}
+          .challenge{padding:4rem 1.1rem;}
+          .ch-inner{gap:1.5rem;}
+          .impact-graphic{padding:1rem;}
+          .impact-top{align-items:flex-start;}
+          .impact-top strong{font-size:3.4rem;}
+          .impact-math{grid-template-columns:1fr;}
+          .year-map{grid-template-columns:repeat(20,1fr);gap:2px;padding:.65rem;}
+          .impact-options{grid-template-columns:1fr;}
         }
       `}</style>
     </main>

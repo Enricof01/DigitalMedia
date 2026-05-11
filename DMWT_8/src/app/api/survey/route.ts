@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 
     const mainApp = readText(body.mainApp, "Social Media");
     const hardestMoment = readText(body.hardestMoment, "Abends");
-    const goal = readText(body.goal, "60 Minuten zurueckholen");
+    const goal = readText(body.goal, "60 Minuten zurückholen");
     const score = getScore(dailyMinutes, pickups);
 
     const response = await prisma.surveyResponse.create({

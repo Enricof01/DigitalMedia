@@ -137,7 +137,7 @@ export default function SurveySection() {
                     ))}
                   </div>
                   <a href="#top" className="survey-submit">
-                    Zurueck nach oben
+                    Zurück nach oben
                   </a>
                 </div>
               ) : (
