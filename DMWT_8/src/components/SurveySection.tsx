@@ -42,6 +42,7 @@ export default function SurveySection() {
   const [goal, setGoal] = useState(GOALS[0]);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [result, setResult] = useState<SurveyResult | null>(null);
+  const [showSurveyHint, setShowSurveyHint] = useState(true);
 
   const dailyHours = useMemo(() => {
     const hours = dailyMinutes / 60;
@@ -62,8 +63,13 @@ export default function SurveySection() {
     GOAL_STEPS[goal] ?? "Einen kleinen, messbaren Schritt für heute festlegen.",
   ], [goal, hardestMoment, mainApp]);
 
+  function dismissSurveyHint() {
+    setShowSurveyHint(false);
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    dismissSurveyHint();
     setSaveState("saving");
     setResult(null);
 
@@ -95,15 +101,20 @@ export default function SurveySection() {
       <div className="embedded-survey-inner">
         <div className="survey-copy">
           <div className="survey-kicker">Dein Nutzungsverhalten</div>
-          <h2>Wie viel Zeit zieht dein Handy wirklich?</h2>
+          <h2>Füll die Umfrage im Handy aus.</h2>
           <p>
-            Beantworte die kurze Umfrage direkt im Phone. Dein Ergebnis wird
-            gespeichert und macht sichtbar, wo der groesste Hebel liegt.
+            Nutze die Regler und Buttons auf dem Smartphone rechts. Dein Ergebnis
+            wird gespeichert und macht sichtbar, wo der groesste Hebel liegt.
           </p>
+          <div className="survey-direction">Rechts im Phone starten</div>
         </div>
 
         <div className="survey-phone-wrap">
           <div className="survey-phone-shadow" />
+          <div className={`survey-phone-callout${showSurveyHint ? "" : " is-hidden"}`}>
+            <span>Hier ausfüllen</span>
+            <strong>Tippe und ziehe direkt im Smartphone</strong>
+          </div>
           <div className="survey-phone">
             <div className="survey-phone-glare" />
             <div className="survey-island" />
@@ -141,7 +152,13 @@ export default function SurveySection() {
                   </a>
                 </div>
               ) : (
-                <form className="survey-form" onSubmit={onSubmit}>
+                <form
+                  className="survey-form"
+                  onSubmit={onSubmit}
+                  onPointerDown={dismissSurveyHint}
+                  onFocusCapture={dismissSurveyHint}
+                  onChange={dismissSurveyHint}
+                >
                   <header className="survey-form-head">
                     <div>
                       <span>Scrollprofil</span>
@@ -243,11 +260,19 @@ export default function SurveySection() {
       <style jsx global>{`
         .embedded-survey{padding:6rem 2rem;background:radial-gradient(circle at 20% 18%,rgba(212,245,71,.18),transparent 30%),linear-gradient(135deg,#eef3dd 0%,#dfe8c7 48%,#cbd9ad 100%);color:#10140d;border-top:1px solid rgba(16,20,13,.14);scroll-margin-top:0;}
         .embedded-survey-inner{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(280px,520px) minmax(360px,1fr);align-items:center;gap:clamp(28px,6vw,80px);}
-        .survey-kicker{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#516039;margin-bottom:18px;font-weight:700;}
+        .survey-kicker{font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:#516039;margin-bottom:18px;font-weight:900;}
         .survey-copy h2{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(4rem,10vw,8rem);line-height:.88;letter-spacing:0;color:#11150d;margin-bottom:22px;}
         .survey-copy p{font-size:1rem;line-height:1.75;color:#536048;max-width:460px;}
+        .survey-direction{display:inline-flex;align-items:center;gap:12px;margin-top:26px;padding:13px 17px;border:2px solid #10140d;background:#d4f547;color:#10140d;border-radius:999px;font-weight:900;font-size:.9rem;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 18px 38px rgba(16,20,13,.14);}
+        .survey-direction::after{content:"→";font-size:1.35rem;line-height:1;}
         .survey-phone-wrap{position:relative;display:flex;align-items:center;justify-content:center;min-height:760px;perspective:1500px;}
         .survey-phone-shadow{position:absolute;width:min(430px,82vw);height:160px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(70,82,46,.32),rgba(45,52,34,.18) 46%,transparent 72%);filter:blur(20px);transform:translateY(305px) rotateX(62deg);}
+        .survey-phone-callout{position:absolute;left:calc(50% - 454px);top:58%;z-index:12;width:230px;padding:15px 16px;border:2px solid #d4f547;background:#10140d;color:#f7f2e8;border-radius:12px;box-shadow:0 24px 55px rgba(16,20,13,.28),0 0 34px rgba(212,245,71,.18);pointer-events:none;transition:opacity .22s ease,transform .22s ease;animation:surveyCalloutPulse 1.6s ease-in-out infinite;}
+        .survey-phone-callout.is-hidden{opacity:0;transform:translateX(-12px);animation:none;}
+        .survey-phone-callout::after{content:"";position:absolute;right:-40px;top:50%;width:40px;height:2px;background:#d4f547;transform:translateY(-50%);}
+        .survey-phone-callout span{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#d4f547;margin-bottom:6px;font-weight:900;}
+        .survey-phone-callout strong{display:block;font-size:.9rem;line-height:1.35;}
+        @keyframes surveyCalloutPulse{0%,100%{transform:translateX(0);box-shadow:0 24px 55px rgba(16,20,13,.28),0 0 28px rgba(212,245,71,.14);}50%{transform:translateX(8px);box-shadow:0 28px 62px rgba(16,20,13,.3),0 0 44px rgba(212,245,71,.25);}}
         .survey-phone{position:relative;width:360px;height:740px;border-radius:46px;background:linear-gradient(115deg,#303626,#151a10 22%,#080a06 60%,#293020);border:2px solid rgba(255,255,255,.28);box-shadow:-22px 32px 52px rgba(73,83,51,.28),30px 52px 110px rgba(38,46,28,.38),inset 14px 0 22px rgba(255,255,255,.07),inset -18px 0 30px rgba(0,0,0,.58);overflow:hidden;transform:rotateX(4deg) rotateY(-7deg) translateZ(32px);transform-style:preserve-3d;}
         .survey-phone::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:4;pointer-events:none;background:linear-gradient(90deg,rgba(255,255,255,.26),transparent 11%,transparent 84%,rgba(255,255,255,.16)),linear-gradient(180deg,rgba(255,255,255,.16),transparent 16%,transparent 80%,rgba(0,0,0,.38));mix-blend-mode:screen;opacity:.52;}
         .survey-phone-glare{position:absolute;inset:2px;z-index:3;border-radius:inherit;pointer-events:none;background:radial-gradient(circle at 28% 18%,rgba(255,255,255,.3),rgba(212,245,71,.12) 18%,transparent 44%);mix-blend-mode:screen;}
@@ -291,6 +316,10 @@ export default function SurveySection() {
           .embedded-survey-inner{grid-template-columns:1fr;gap:24px;}
           .survey-copy h2{font-size:4rem;}
           .survey-phone-wrap{min-height:700px;}
+          .survey-phone-callout{left:50%;top:0;width:min(320px,86vw);transform:translate(-50%,-18px);text-align:center;}
+          .survey-phone-callout.is-hidden{transform:translate(-50%,-28px);}
+          .survey-phone-callout::after{right:50%;top:auto;bottom:-44px;width:2px;height:44px;transform:translateX(50%);box-shadow:0 14px 0 #d4f547;}
+          @keyframes surveyCalloutPulse{0%,100%{transform:translate(-50%,-18px);}50%{transform:translate(-50%,-10px);}}
           .survey-phone{width:min(350px,92vw);height:700px;transform:none;}
         }
       `}</style>

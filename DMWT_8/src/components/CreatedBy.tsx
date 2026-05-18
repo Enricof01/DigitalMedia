@@ -24,7 +24,7 @@ export default function CreatedBy() {
 
   return (
     <div style={{ 
-      fontSize: ".8rem", 
+      fontSize: "1rem", 
       color: "var(--dim)", 
       display: "flex", 
       gap: ".5rem",

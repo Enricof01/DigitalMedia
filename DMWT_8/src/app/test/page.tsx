@@ -155,6 +155,14 @@ const STORIES = [
 ];
 
 const PARTICLES = ["+3 Min", "+8 Min", "+5 Min", "+11 Min", "+4 Min", "+6 Min", "+9 Min", "+2 Min", "+7 Min", "+10 Min"];
+const FEED_POSTS = [
+  POSTS[4],
+  POSTS[1],
+  POSTS[2],
+  POSTS[3],
+  POSTS[0],
+  ...POSTS.slice(5),
+];
 const SCROLLED_POSTS = POSTS.length;
 
 const ALTS = [
@@ -173,11 +181,17 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 const easeInOut = (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
 const lerp = (a: number, b: number, t: number) => a + (b - a) * clamp(t, 0, 1);
 const phase = (p: number, s: number, e: number) => clamp((p - s) / (e - s), 0, 1);
+const formatPhoneTime = () => new Intl.DateTimeFormat("de-DE", {
+  hour: "numeric",
+  minute: "2-digit",
+}).format(new Date());
 
 export default function Home() {
   const [hours, setHours] = useState(2);
   const [activeAlt, setActiveAlt] = useState<number | null>(null);
   const [timeDebt, setTimeDebt] = useState(0);
+  const [phoneTime, setPhoneTime] = useState(formatPhoneTime);
+  const [showBrandTagline, setShowBrandTagline] = useState(true);
 
   const storyRef     = useRef<HTMLDivElement>(null);
   const phoneRef     = useRef<HTMLDivElement>(null);
@@ -200,12 +214,12 @@ export default function Home() {
   const lostDaysDisplay = lostDays.toLocaleString("de-DE", { maximumFractionDigits: 1 });
   const activeDays = Math.min(365, Math.round(lostDays));
   const yearCells = Array.from({ length: 365 }, (_, index) => index < activeDays);
-  const clockAngle = (hours / 10) * 360;
+  const clockAngle = (hours / 12) * 360;
   const potential = [
-    { label: "Bücher", value: Math.max(1, Math.floor(yr / 8)), unit: "lesen", max: 460 },
-    { label: "Workouts", value: Math.max(1, Math.floor(yr)), unit: "machen", max: 3650 },
-    { label: "Spaziergänge", value: Math.max(1, Math.floor(yr / 1.5)), unit: "30 Min", max: 2450 },
-    { label: "Sprachstunden", value: Math.max(1, Math.round(yr)), unit: "üben", max: 3650 },
+    { label: "Bücher", value: Math.max(1, Math.floor(yr / 8)), unit: "lesen", max: 548 },
+    { label: "Workouts", value: Math.max(1, Math.floor(yr)), unit: "machen", max: 4380 },
+    { label: "Spaziergänge", value: Math.max(1, Math.floor(yr / 1.5)), unit: "30 Min", max: 2920 },
+    { label: "Sprachstunden", value: Math.max(1, Math.round(yr)), unit: "üben", max: 4380 },
   ];
   const thumbKm = ((hours * 60 * 20) / 1000).toFixed(1);
   const recoveryMode = timeDebt >= 50;
@@ -227,9 +241,9 @@ export default function Home() {
     const y = event.clientY - centerY;
     const degrees = (Math.atan2(x, -y) * 180) / Math.PI;
     const normalized = (degrees + 360) % 360;
-    const nextHours = Math.round((normalized / 360) * 10 * 2) / 2;
+    const nextHours = Math.round((normalized / 360) * 12 * 2) / 2;
 
-    setHours(nextHours < 0.5 ? 10 : nextHours);
+    setHours(nextHours < 0.5 ? 12 : nextHours);
   }, []);
 
   const onPhonePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
@@ -277,6 +291,7 @@ export default function Home() {
     const p     = clamp(-rect.top / total, 0, 1);
     const VW    = window.innerWidth, VH = window.innerHeight;
 
+    setShowBrandTagline(p < 0.01);
     if (hintRef.current)   hintRef.current.style.opacity   = p < 0.04 ? "1" : "0";
     if (bgWordRef.current) bgWordRef.current.style.opacity = String(lerp(1, 0, easeOut(phase(p, 0.1, 0.35))));
     if (particlesRef.current) {
@@ -358,33 +373,52 @@ export default function Home() {
     return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(rafRef.current); };
   }, [onScroll]);
 
-  const allPosts = [...POSTS, ...POSTS, ...POSTS];
+  useEffect(() => {
+    const updatePhoneTime = () => setPhoneTime(formatPhoneTime());
+    updatePhoneTime();
+    const interval = window.setInterval(updatePhoneTime, 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const allPosts = [...FEED_POSTS, ...FEED_POSTS, ...FEED_POSTS];
 
   return (
     <main className="main" id="top">
-      
+      <div className="brand-lockup">
+        <a className="brand-logo" href="/test" aria-label="Mindscroll">
+          <span className="brand-badge">
+            <span className="brand-phone" />
+          </span>
+          <span className="brand-word" data-text="MINDSCROLL">
+            <span>MINDSCROLL</span>
+            <span>SCROLLFREI</span>
+          </span>
+        </a>
+        <div className={`brand-tagline${showBrandTagline ? "" : " is-hidden"}`}>Kampagne gegen Zeitverschwendung</div>
+      </div>
+      <details className="page-nav">
+        <summary aria-label="Navigation öffnen">
+          <span />
+          <span />
+          <span />
+        </summary>
+        <nav aria-label="Seitennavigation">
+          <a href="#top">Start</a>
+          <a href="#recall">Stopp</a>
+          <a href="#impact">Infografik</a>
+          <a href="#survey">Umfrage</a>
+        </nav>
+      </details>
 
       {/* ═══ STORY HERO ═══ */}
       <div className="story" ref={storyRef}>
         <div className="sticky">
-          <a className="brand-logo" href="/test" aria-label="Mindscroll">
-            <span className="brand-badge">
-              <span className="brand-phone" />
-            </span>
-            <span className="brand-word" data-text="MINDSCROLL">
-              <span>MINDSCROLL</span>
-              <span>SCROLLFREI</span>
-            </span>
-          </a>
           <div className={`time-account${recoveryMode ? " recover" : ""}`} aria-label={`${timeAccountValue} ${timeAccountTitle}`}>
             <span>{timeAccountTitle}</span>
             <strong>{timeAccountValue}</strong>
             <small>{timeAccountHint}</small>
           </div>
           <div className="bg-word" ref={bgWordRef}>SCROLL</div>
-          <div className="eyebrow-top">Eine Kampagne gegen die stille Zeitverschwendung
-            
-          </div>
           <div className="hero-prompt">
             <span>Scroll nach unten</span>
             <strong>und hover mit der Maus über das Smartphone</strong>
@@ -412,7 +446,7 @@ export default function Home() {
                 {/* Layer 0: Feed */}
                 <div className="screen-layer" ref={layerFeedRef} style={{ opacity: 1, pointerEvents: "auto" }}>
                   <div className="status-bar">
-                    <span className="status-time">9:41</span>
+                    <span className="status-time">{phoneTime}</span>
                     <div className="status-icons"><span>●●●</span><span>WiFi</span><span className="notify-dot">3</span><span>🔋</span></div>
                   </div>
                   <div
@@ -441,7 +475,7 @@ export default function Home() {
                     </div>
                     <div className="feed-inner" ref={feedInnerRef}>
                       {allPosts.map((p, i) => {
-                        const postNo = (i % POSTS.length) + 1;
+                        const postNo = (i % FEED_POSTS.length) + 1;
                         const isReel = p.kind === "reel";
                         return (
                           <div key={i} className={`fpost${isReel ? " is-reel" : ""}${p.sponsored ? " is-sponsored" : ""}`}>
@@ -532,7 +566,7 @@ export default function Home() {
                           <span className="ph-val">{hours % 1 === 0 ? hours : hours.toFixed(1)}</span>
                           <span className="ph-unit">Stunden / Tag</span>
                         </div>
-                        <input type="range" className="ph-range" min={0.5} max={10} step={0.5} value={hours}
+                        <input type="range" className="ph-range" min={0.5} max={12} step={0.5} value={hours}
                           onChange={e => setHours(Number(e.target.value))} />
                         <div className="range-ends"><span>30 Min</span><span>8 Std</span></div>
 
@@ -588,7 +622,7 @@ export default function Home() {
       </div>
 
       {/* ═══ RECALL BREAK ═══ */}
-      <section className="recall-break">
+      <section className="recall-break" id="recall">
         <div className="recall-inner">
           <div className="recall-strip" aria-hidden="true">
             {POSTS.slice(0, 6).map((post) => (
@@ -610,7 +644,7 @@ export default function Home() {
       </section>
 
       {/* ═══ CHALLENGE ═══ */}
-      <section className="challenge">
+      <section className="challenge" id="impact">
         <div className="ch-inner">
           <div className="challenge-copy">
             <div className="ch-eyebrow">Bereit?</div>
@@ -621,7 +655,7 @@ export default function Home() {
               role="slider"
               aria-label="Social-Media-Zeit pro Tag über Uhr einstellen"
               aria-valuemin={0.5}
-              aria-valuemax={10}
+              aria-valuemax={12}
               aria-valuenow={hours}
               aria-valuetext={`${hours.toLocaleString("de-DE")} Stunden pro Tag`}
               tabIndex={0}
@@ -634,18 +668,18 @@ export default function Home() {
                 if (event.buttons === 1) setHoursFromClock(event);
               }}
               onKeyDown={(event) => {
-                if (event.key === "ArrowRight" || event.key === "ArrowUp") setHours((value) => Math.min(10, value + 0.5));
+                if (event.key === "ArrowRight" || event.key === "ArrowUp") setHours((value) => Math.min(12, value + 0.5));
                 if (event.key === "ArrowLeft" || event.key === "ArrowDown") setHours((value) => Math.max(0.5, value - 0.5));
               }}
             >
               <div className="dial-face">
-                {Array.from({ length: 10 }, (_, index) => (
+                {Array.from({ length: 12 }, (_, index) => (
                   <span
                     key={index}
                     className="dial-tick"
-                    style={{ transform: `rotate(${index * 36}deg)` }}
+                    style={{ transform: `rotate(${index * 30}deg)` }}
                   >
-                    <i style={{ transform: `translateX(-50%) rotate(${-index * 36}deg)` }}>{index === 0 ? 10 : index}</i>
+                    <i style={{ transform: `translateX(-50%) rotate(${-index * 30}deg)` }}>{index === 0 ? 12 : index}</i>
                   </span>
                 ))}
                 <div className="dial-track" />
@@ -657,7 +691,7 @@ export default function Home() {
                   <small>pro Tag</small>
                 </div>
               </div>
-              <div className="dial-hint">Zeiger ziehen</div>
+              <div className="dial-hint">Zeiger aufziehen</div>
             </div>
           </div>
           <aside className="impact-graphic" aria-label="Interaktive Infografik zum Zeitverlust">
@@ -673,7 +707,7 @@ export default function Home() {
               <input
                 type="range"
                 min={0.5}
-                max={10}
+                max={12}
                 step={0.5}
                 value={hours}
                 onChange={(event) => setHours(Number(event.target.value))}
@@ -712,7 +746,7 @@ export default function Home() {
 
       {/* ═══ FOOTER ═══ */}
 {/* ═══ FOOTER ═══ */}
-<footer className="site-footer">
+<footer className="site-footer" id="footer">
   <div className="footer-inner">
     <div className="footer-logo">scrollfrei.</div>
     <div className="footer-text">
@@ -730,32 +764,46 @@ export default function Home() {
         html{scroll-behavior:smooth;}
         body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;}
         .main{width:100%;}
+        #recall,#impact,#survey,#footer{scroll-margin-top:24px;}
 
         .story{position:relative;height:820vh;}
         .sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#2c3323 0%,#22291b 58%,#1b2216 100%);}
-        .brand-logo{position:absolute;top:22px;left:24px;z-index:40;display:inline-flex;align-items:center;height:46px;padding:4px 10px 4px 4px;background:#090907;border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.08);text-decoration:none;transform:translateZ(0);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;}
+        .brand-lockup{position:fixed;top:18px;left:20px;z-index:120;display:flex;flex-direction:column;align-items:flex-start;gap:9px;pointer-events:auto;transform:scale(1.38) translateZ(0);transform-origin:top left;}
+        .brand-logo{display:inline-flex;align-items:center;height:38px;padding:3px 8px 3px 3px;background:#090907;border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.08);text-decoration:none;transform:translateZ(0);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;}
         .brand-logo:hover{transform:translateY(-1px);border-color:rgba(212,245,71,.45);box-shadow:0 22px 48px rgba(0,0,0,.44),0 0 28px rgba(212,245,71,.1),inset 0 1px 0 rgba(255,255,255,.1);}
-        .brand-badge{position:relative;width:34px;height:38px;background:var(--accent);display:flex;align-items:flex-end;justify-content:flex-start;padding:5px;box-shadow:inset 0 0 0 1px rgba(10,10,8,.2);}
+        .brand-badge{position:relative;width:34px;height:32px;background:var(--accent);display:flex;align-items:center;justify-content:center;padding:3px;box-shadow:inset 0 0 0 1px rgba(10,10,8,.2);}
         .brand-badge::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.24),transparent 42%);pointer-events:none;}
-        .brand-phone{position:relative;width:12px;height:17px;border:2px solid #10100e;border-radius:2px 2px 4px 4px;transform:rotate(-14deg);box-shadow:3px 2px 0 rgba(10,10,8,.3);}
+        .brand-phone{position:relative;width:19px;height:25px;border:3px solid #10100e;border-radius:4px 4px 6px 6px;transform:rotate(-10deg);box-shadow:3px 2px 0 rgba(10,10,8,.3);background:rgba(16,16,14,.04);}
+        .brand-phone::before{content:"∞";position:absolute;left:50%;top:43%;transform:translate(-50%,-50%) rotate(10deg);font-family:'DM Sans',sans-serif;font-size:18px;line-height:1;color:#10100e;font-weight:900;}
         .brand-phone::after{content:"";position:absolute;left:3px;right:3px;bottom:1px;height:2px;border-radius:99px;background:#10100e;}
-        .brand-word{position:relative;display:block;width:172px;height:34px;overflow:hidden;font-family:'Bebas Neue',Impact,sans-serif;font-size:2.55rem;line-height:.88;color:#f0ede6;letter-spacing:.02em;margin-left:9px;text-shadow:2px 0 0 rgba(255,255,255,.14),0 1px 0 rgba(0,0,0,.9);}
+        .brand-word{position:relative;display:block;width:136px;height:27px;overflow:hidden;font-family:'Bebas Neue',Impact,sans-serif;font-size:2rem;line-height:.88;color:#f0ede6;letter-spacing:.02em;margin-left:7px;text-shadow:2px 0 0 rgba(255,255,255,.14),0 1px 0 rgba(0,0,0,.9);}
         .brand-word::after{content:attr(data-text);position:absolute;inset:0;color:var(--accent);opacity:0;clip-path:inset(0 0 65% 0);transform:translateX(0);pointer-events:none;}
         .brand-word span{display:block;transition:transform .22s ease,opacity .18s ease;}
         .brand-word span:nth-child(2){color:var(--accent);}
-        .brand-logo:hover .brand-word span{transform:translateY(-34px);}
+        .brand-logo:hover .brand-word span{transform:translateY(-27px);}
         .brand-logo:hover .brand-word::after{animation:brandGlitch .38s steps(2,end) 2;opacity:.82;}
+        .brand-tagline{font-size:18px;line-height:1.35;letter-spacing:.2em;text-transform:uppercase;color:rgba(247,242,232,.82);text-shadow:0 10px 24px rgba(0,0,0,.45);max-width:520px;font-weight:700;transition:opacity .22s ease,transform .22s ease;}
+        .brand-tagline.is-hidden{opacity:0;transform:translateY(-8px);pointer-events:none;}
+        .page-nav{position:fixed;top:158px;right:24px;z-index:130;}
+        .page-nav summary{width:46px;height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:rgba(9,11,7,.78);border:1px solid rgba(255,255,255,.16);box-shadow:0 20px 52px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(16px);cursor:pointer;list-style:none;}
+        .page-nav summary::-webkit-details-marker{display:none;}
+        .page-nav summary span{width:22px;height:2px;border-radius:99px;background:var(--accent);transition:transform .18s ease,opacity .18s ease;}
+        .page-nav[open] summary span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+        .page-nav[open] summary span:nth-child(2){opacity:0;}
+        .page-nav[open] summary span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+        .page-nav nav{position:absolute;top:50px;right:0;min-width:174px;display:flex;flex-direction:column;gap:4px;padding:7px;background:rgba(9,11,7,.84);border:1px solid rgba(255,255,255,.16);box-shadow:0 24px 58px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(16px);}
+        .page-nav a{display:flex;align-items:center;justify-content:flex-start;min-height:36px;padding:0 13px;border-radius:8px;color:rgba(247,242,232,.8);font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;transition:background .16s ease,color .16s ease,transform .16s ease;}
+        .page-nav a:hover,.page-nav a:focus-visible{background:var(--accent);color:#10140d;outline:none;transform:translateX(-2px);}
         @keyframes brandGlitch{0%{transform:translateX(0);clip-path:inset(0 0 72% 0);}35%{transform:translateX(3px);clip-path:inset(34% 0 32% 0);}70%{transform:translateX(-2px);clip-path:inset(66% 0 0 0);}100%{transform:translateX(0);clip-path:inset(0 0 65% 0);}}
         .time-account{position:absolute;top:22px;right:24px;z-index:38;min-width:190px;padding:14px 16px 13px;background:rgba(51,60,41,.88);border:1px solid rgba(255,255,255,.2);box-shadow:0 20px 46px rgba(0,0,0,.22),0 0 28px rgba(212,245,71,.08),inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(14px);}
         .time-account.recover{background:rgba(212,245,71,.94);color:#10140d;border-color:rgba(255,255,255,.38);box-shadow:0 22px 58px rgba(212,245,71,.18),inset 0 1px 0 rgba(255,255,255,.34);}
-        .time-account span{display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);line-height:1;}
+        .time-account span{display:block;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);line-height:1;}
         .time-account.recover span{color:#354112;}
-        .time-account strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:3.15rem;line-height:.9;color:var(--accent);font-weight:400;margin-top:6px;}
+        .time-account strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:3.75rem;line-height:.9;color:var(--accent);font-weight:400;margin-top:7px;}
         .time-account.recover strong{color:#10140d;}
-        .time-account small{display:block;font-size:11px;line-height:1.2;color:rgba(244,239,230,.78);}
+        .time-account small{display:block;font-size:14px;line-height:1.25;color:rgba(244,239,230,.78);}
         .time-account.recover small{color:#354112;}
-        .bg-word{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:min(35vw,320px);color:rgba(255,255,255,.07);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;letter-spacing:-.02em;}
-        .eyebrow-top{position:absolute;top:5vh;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);z-index:20;white-space:nowrap;}
+        .bg-word{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:min(62vw,640px);color:rgba(255,255,255,.055);top:51%;left:50%;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;letter-spacing:-.035em;}
         .hero-prompt{position:absolute;left:clamp(20px,7vw,120px);bottom:9vh;z-index:24;max-width:260px;padding:14px 16px;background:rgba(51,60,41,.78);border:1px solid rgba(212,245,71,.34);box-shadow:0 18px 42px rgba(0,0,0,.22);backdrop-filter:blur(12px);}
         .hero-prompt::after{content:"";position:absolute;right:-54px;top:50%;width:42px;height:1px;background:var(--accent);box-shadow:10px 0 0 var(--accent);animation:promptPulse 1.4s ease-in-out infinite;}
         .hero-prompt span{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
@@ -792,7 +840,7 @@ export default function Home() {
         .status-time{font-size:13px;font-weight:500;}
         .status-icons{display:flex;gap:5px;align-items:center;font-size:11px;}
         .notify-dot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--accent);color:#10140d;font-size:9px;font-weight:800;}
-        .feed-scroll{position:absolute;top:48px;left:0;right:0;bottom:60px;overflow:hidden;padding-top:122px;}
+        .feed-scroll{position:absolute;top:48px;left:0;right:0;bottom:60px;overflow:hidden;padding-top:154px;}
         .feed-chrome{position:absolute;top:0;left:0;right:0;z-index:8;background:linear-gradient(to bottom,#202619 78%,rgba(32,38,25,.86));border-bottom:1px solid rgba(255,255,255,.07);}
         .insta-head{height:36px;display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:0 14px;font-size:14px;}
         .insta-head strong{font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:.02em;color:var(--text);font-weight:400;}
@@ -923,7 +971,7 @@ export default function Home() {
         .challenge{padding:5rem 2rem;border-top:1px solid rgba(255,255,255,.12);background:#293120;}
         .ch-inner{max-width:1220px;margin:0 auto;display:grid;grid-template-columns:minmax(360px,.85fr) minmax(420px,1.15fr);gap:clamp(2rem,5vw,4rem);align-items:center;}
         .challenge-copy{min-width:0;}
-        .ch-eyebrow{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
+        .ch-eyebrow{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;font-weight:800;}
         .ch-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,8vw,6rem);line-height:.9;letter-spacing:-.02em;margin-bottom:1.5rem;}
         .ch-accent{color:var(--accent);}
         .ch-body{font-size:.95rem;color:var(--dim);line-height:1.7;margin-bottom:2rem;}
@@ -943,8 +991,8 @@ export default function Home() {
         .dial-center{position:absolute;left:50%;top:50%;z-index:5;width:118px;height:118px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:translate(-50%,-50%);background:#f7f2e8;color:#10140d;box-shadow:0 16px 42px rgba(0,0,0,.24),inset 0 0 0 1px rgba(16,20,13,.08);}
         .dial-center strong{font-family:'Bebas Neue',sans-serif;font-size:3rem;line-height:.85;font-weight:400;}
         .dial-center small{font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:#5d6b40;}
-        .dial-hint{display:inline-flex;align-items:center;gap:.45rem;margin-top:.7rem;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);}
-        .dial-hint::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px rgba(212,245,71,.5);}
+        .dial-hint{display:inline-flex;align-items:center;gap:.65rem;margin-top:1rem;padding:10px 14px;border:1px solid rgba(212,245,71,.4);background:rgba(212,245,71,.1);box-shadow:0 16px 34px rgba(0,0,0,.16),0 0 28px rgba(212,245,71,.08);font-size:1rem;line-height:1;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:800;}
+        .dial-hint::before{content:"";width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px rgba(212,245,71,.7);}
         .impact-graphic{position:relative;overflow:hidden;border:1px solid rgba(212,245,71,.3);border-radius:12px;padding:1.25rem;background:linear-gradient(135deg,rgba(247,242,232,.97),rgba(222,235,178,.93));color:#10140d;box-shadow:0 34px 80px rgba(0,0,0,.24),0 0 46px rgba(212,245,71,.1);}
         .impact-graphic::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(16,20,13,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(16,20,13,.05) 1px,transparent 1px);background-size:22px 22px;mask-image:linear-gradient(145deg,rgba(0,0,0,.85),transparent 72%);pointer-events:none;}
         .impact-graphic>*{position:relative;z-index:1;}
@@ -976,26 +1024,34 @@ export default function Home() {
         .site-footer{padding:3rem 2rem;border-top:1px solid rgba(255,255,255,.12);background:#202619;}
         .footer-inner{max-width:700px;margin:0 auto;display:flex;flex-direction:column;gap:.75rem;}
         .footer-logo{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent);letter-spacing:.05em;}
-        .footer-text{font-size:.8rem;color:var(--dim);line-height:1.7;}
+        .footer-text{font-size:1rem;color:var(--dim);line-height:1.75;}
         @media (max-width:980px){
           .ch-inner{grid-template-columns:1fr;align-items:start;}
           .impact-graphic{max-width:760px;width:100%;}
           .year-map{grid-template-columns:repeat(25,1fr);}
         }
         @media (max-width:700px){
-          .brand-logo{top:16px;left:16px;height:38px;padding:3px 8px 3px 3px;}
-          .brand-badge{width:28px;height:32px;padding:4px;}
-          .brand-phone{width:10px;height:15px;}
+          .brand-lockup{top:16px;left:16px;gap:9px;transform:scale(1.16) translateZ(0);}
+          .brand-logo{height:38px;padding:3px 8px 3px 3px;}
+          .brand-badge{width:34px;height:32px;padding:3px;}
+          .brand-phone{width:18px;height:24px;border-width:3px;}
+          .brand-phone::before{font-size:17px;}
           .brand-word{width:136px;height:27px;font-size:2rem;margin-left:7px;}
           .brand-logo:hover .brand-word span{transform:translateY(-27px);}
+          .brand-tagline{font-size:12px;letter-spacing:.16em;max-width:280px;}
+          .page-nav{top:170px;right:16px;}
+          .page-nav summary{width:42px;height:38px;}
+          .page-nav nav{top:46px;min-width:158px;}
+          .page-nav a{min-height:34px;font-size:.72rem;}
+          .bg-word{font-size:min(88vw,360px);opacity:.9;}
           .time-account{top:62px;right:16px;bottom:auto;min-width:150px;padding:10px 12px;}
-          .time-account strong{font-size:2.25rem;}
-          .time-account small{font-size:9px;}
+          .time-account span{font-size:10px;}
+          .time-account strong{font-size:2.55rem;}
+          .time-account small{font-size:11px;}
           .hero-prompt{left:16px;right:16px;bottom:8vh;max-width:none;}
           .hero-prompt::after{display:none;}
           .time-particles{width:100vw;height:70vh;}
           .time-particles span{font-size:1rem;height:23px;}
-          .eyebrow-top{top:112px;width:100%;padding:0 16px;text-align:center;white-space:normal;line-height:1.5;}
           .recall-grid{grid-template-columns:1fr;}
           .recall-break{padding:4rem 1.1rem;}
           .challenge{padding:4rem 1.1rem;}
