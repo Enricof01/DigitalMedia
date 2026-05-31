@@ -190,7 +190,7 @@ export default function Home() {
   const [hours, setHours] = useState(2);
   const [activeAlt, setActiveAlt] = useState<number | null>(null);
   const [timeDebt, setTimeDebt] = useState(0);
-  const [phoneTime, setPhoneTime] = useState(formatPhoneTime);
+  const [phoneTime, setPhoneTime] = useState("--:--");
   const [showBrandTagline, setShowBrandTagline] = useState(true);
 
   const storyRef     = useRef<HTMLDivElement>(null);
@@ -218,7 +218,7 @@ export default function Home() {
   const potential = [
     { label: "Bücher", value: Math.max(1, Math.floor(yr / 8)), unit: "lesen", max: 548 },
     { label: "Workouts", value: Math.max(1, Math.floor(yr)), unit: "machen", max: 4380 },
-    { label: "Spaziergänge", value: Math.max(1, Math.floor(yr / 1.5)), unit: "30 Min", max: 2920 },
+    { label: "Spaziergänge", value: Math.max(1, Math.floor(yr * 2)), unit: "30 Min", max: 8760 },
     { label: "Sprachstunden", value: Math.max(1, Math.round(yr)), unit: "üben", max: 4380 },
   ];
   const thumbKm = ((hours * 60 * 20) / 1000).toFixed(1);
@@ -446,7 +446,7 @@ export default function Home() {
                 {/* Layer 0: Feed */}
                 <div className="screen-layer" ref={layerFeedRef} style={{ opacity: 1, pointerEvents: "auto" }}>
                   <div className="status-bar">
-                    <span className="status-time">{phoneTime}</span>
+                    <span className="status-time" suppressHydrationWarning>{phoneTime}</span>
                     <div className="status-icons"><span>●●●</span><span>WiFi</span><span className="notify-dot">3</span><span>🔋</span></div>
                   </div>
                   <div
