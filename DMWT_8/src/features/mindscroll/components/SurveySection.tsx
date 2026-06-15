@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type LoginState = "idle" | "loading" | "ready" | "error";
+type AuthMode = "login" | "register";
 
 type ChallengeUser = {
   id: number;
@@ -74,8 +75,10 @@ function getNextOpenDay(entries: ChallengeEntry[]) {
 }
 
 export default function SurveySection() {
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [loginName, setLoginName] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [goal, setGoal] = useState(GOALS[0]);
   const [targetMinutes, setTargetMinutes] = useState(120);
   const [screenMinutes, setScreenMinutes] = useState(180);
@@ -142,9 +145,10 @@ export default function SurveySection() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "login",
+          action: authMode,
           name: loginName,
           email: loginEmail,
+          password: loginPassword,
         }),
       });
 
@@ -155,6 +159,7 @@ export default function SurveySection() {
       setUser(data.user as ChallengeUser);
       setEntries(loadedEntries);
       setLoginState("ready");
+      setLoginPassword("");
       syncDayForm(getNextOpenDay(loadedEntries), loadedEntries);
     } catch (error) {
       setLoginState("error");
@@ -203,10 +208,10 @@ export default function SurveySection() {
       <div className="embedded-survey-inner">
         <div className="survey-copy">
           <div className="survey-kicker">7 Tage Challenge</div>
-          <h2>Selbsttest erst nach Anmeldung.</h2>
+          <h2>Login für deinen Selbsttest.</h2>
           <p>
             Melde dich an, trage sieben Tage lang deine Bildschirmzeit ein und sieh,
-            wie viel Zeit du gegenueber Tag 1 zurueckholst.
+            wie viel Zeit du gegenüber Tag 1 zurueckholst.
           </p>
           <div className="challenge-proof">
             <span>{progressText}</span>
@@ -225,22 +230,47 @@ export default function SurveySection() {
                   <form className="challenge-form" onSubmit={onLogin}>
                     <header className="survey-form-head">
                       <div>
-                        <span>Anmeldung</span>
-                        <h3>Challenge starten</h3>
+                        <span>{authMode === "login" ? "Einloggen" : "Neu erstellen"}</span>
+                        <h3>{authMode === "login" ? "Account Login" : "Challenge starten"}</h3>
                       </div>
                       <strong>7</strong>
                     </header>
 
-                    <label className="challenge-text-field">
-                      <span>Name</span>
-                      <input
-                        type="text"
-                        value={loginName}
-                        onChange={(event) => setLoginName(event.target.value)}
-                        placeholder="Dein Name"
-                        required
-                      />
-                    </label>
+                    <div className="auth-mode-switch" aria-label="Login Modus">
+                      <button
+                        type="button"
+                        className={authMode === "login" ? "active" : ""}
+                        onClick={() => {
+                          setAuthMode("login");
+                          setMessage("");
+                        }}
+                      >
+                        Einloggen
+                      </button>
+                      <button
+                        type="button"
+                        className={authMode === "register" ? "active" : ""}
+                        onClick={() => {
+                          setAuthMode("register");
+                          setMessage("");
+                        }}
+                      >
+                        Neu erstellen
+                      </button>
+                    </div>
+
+                    {authMode === "register" && (
+                      <label className="challenge-text-field">
+                        <span>Name</span>
+                        <input
+                          type="text"
+                          value={loginName}
+                          onChange={(event) => setLoginName(event.target.value)}
+                          placeholder="Dein Name"
+                          required
+                        />
+                      </label>
+                    )}
 
                     <label className="challenge-text-field">
                       <span>E-Mail</span>
@@ -252,6 +282,20 @@ export default function SurveySection() {
                         required
                       />
                     </label>
+
+                    <label className="challenge-text-field">
+                      <span>Passwort</span>
+                      <input
+                        type="password"
+                        value={loginPassword}
+                        onChange={(event) => setLoginPassword(event.target.value)}
+                        placeholder="Mindestens 6 Zeichen"
+                        minLength={6}
+                        required
+                      />
+                    </label>
+
+                    <p className="challenge-login-note">Dein Passwort wird nur als Hash in der Datenbank gespeichert.</p>
 
                     <fieldset className="survey-group">
                       <legend>Was willst du mit der Zeit machen?</legend>
@@ -272,7 +316,7 @@ export default function SurveySection() {
                     {loginState === "error" && <p className="survey-error">{message}</p>}
 
                     <button className="survey-submit" type="submit" disabled={loginState === "loading"}>
-                      {loginState === "loading" ? "Meldet an..." : "Anmelden und starten"}
+                      {loginState === "loading" ? "Prüft..." : authMode === "login" ? "Einloggen" : "Account erstellen"}
                     </button>
                   </form>
                 ) : (
@@ -372,7 +416,7 @@ export default function SurveySection() {
             <div className="dashboard-head">
               <span>Deine Grafik</span>
               <strong>{savedMinutes > 0 ? formatMinutes(savedMinutes) : "0 Min"}</strong>
-              <small>gegenueber Tag 1 gespart</small>
+              <small>gegenüber Tag 1 gespart</small>
             </div>
 
             <div className="challenge-chart">
@@ -437,17 +481,22 @@ export default function SurveySection() {
         .survey-phone-glare{position:absolute;inset:2px;z-index:3;border-radius:inherit;pointer-events:none;background:radial-gradient(circle at 28% 18%,rgba(255,255,255,.3),rgba(212,245,71,.12) 18%,transparent 44%);mix-blend-mode:screen;}
         .survey-island{position:absolute;top:14px;left:50%;z-index:8;width:94px;height:28px;border-radius:999px;background:#080a06;transform:translateX(-50%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
         .survey-screen{position:absolute;inset:0;padding:58px 20px 22px;background:#202619;color:#f7f2e8;overflow:hidden;border-radius:inherit;}
-        .challenge-form{height:100%;display:flex;flex-direction:column;}
+        .challenge-form{height:100%;display:flex;flex-direction:column;overflow-y:auto;padding-bottom:18px;scrollbar-width:none;}
+        .challenge-form::-webkit-scrollbar{display:none;}
         .survey-form-head{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:14px;}
         .survey-form-head span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#b8b09c;}
         .survey-form-head h3{font-family:'DM Serif Display',serif;font-size:1.55rem;line-height:1.1;font-weight:400;margin-top:3px;}
         .survey-form-head strong{font-family:'Bebas Neue',sans-serif;color:#d4f547;font-size:3rem;line-height:.85;font-weight:400;}
+        .auth-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:15px;padding:4px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(8,10,6,.28);}
+        .auth-mode-switch button{border:0;border-radius:10px;background:transparent;color:#b8b09c;padding:10px 8px;font:inherit;font-size:.74rem;font-weight:900;letter-spacing:.04em;cursor:pointer;transition:background .16s ease,color .16s ease,transform .16s ease;}
+        .auth-mode-switch button:hover,.auth-mode-switch button.active{background:#d4f547;color:#10140d;transform:translateY(-1px);}
         .challenge-text-field,.survey-field,.challenge-note{display:block;margin-bottom:15px;}
         .challenge-text-field span,.challenge-note span,.survey-field span{display:flex;justify-content:space-between;gap:12px;font-size:.82rem;color:#d8d3c3;margin-bottom:8px;}
         .survey-field strong{color:#d4f547;font-weight:700;}
         .challenge-text-field input,.challenge-note textarea{width:100%;border:1px solid rgba(255,255,255,.12);border-radius:11px;background:#343c29;color:#f7f2e8;padding:12px 13px;font:inherit;font-size:.82rem;outline:none;}
         .challenge-text-field input:focus,.challenge-note textarea:focus{border-color:#d4f547;box-shadow:0 0 0 4px rgba(212,245,71,.1);}
         .challenge-note textarea{resize:none;line-height:1.35;}
+        .challenge-login-note{margin:-2px 0 13px;color:#b8b09c;font-size:.72rem;line-height:1.4;}
         .survey-field input{width:100%;height:4px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,.16);border-radius:99px;outline:none;}
         .survey-field input::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:#d4f547;box-shadow:0 0 0 5px rgba(212,245,71,.14);cursor:pointer;}
         .survey-group{border:0;margin:0 0 14px;}
@@ -460,7 +509,7 @@ export default function SurveySection() {
         .challenge-days button{min-height:34px;padding:0;font-weight:800;}
         .challenge-days button.done{background:#d4f547;color:#10140d;border-color:#d4f547;}
         .challenge-days button.done.active{box-shadow:0 0 0 3px rgba(212,245,71,.16);}
-        .survey-submit{width:100%;border:0;border-radius:999px;background:#d4f547;color:#10140d;padding:14px 16px;font:inherit;font-weight:800;text-align:center;text-decoration:none;cursor:pointer;box-shadow:0 16px 38px rgba(212,245,71,.22);margin-top:auto;}
+        .survey-submit{width:100%;border:0;border-radius:999px;background:#d4f547;color:#10140d;padding:14px 16px;font:inherit;font-weight:800;text-align:center;text-decoration:none;cursor:pointer;box-shadow:0 16px 38px rgba(212,245,71,.22);margin-top:14px;}
         .survey-submit:disabled{opacity:.68;cursor:wait;}
         .survey-error,.survey-success{font-size:.75rem;line-height:1.4;margin-bottom:10px;}
         .survey-error{color:#ffd2d2;}

@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { hashPassword, verifyPassword } from "@/lib/password";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 type ChallengePayload = {
   action?: unknown;
   name?: unknown;
   email?: unknown;
+  password?: unknown;
   userId?: unknown;
   day?: unknown;
   screenMinutes?: unknown;
@@ -17,6 +20,7 @@ type UserRow = {
   id: number;
   name: string;
   email: string;
+  password: string;
 };
 
 type EntryRow = {
@@ -32,6 +36,11 @@ type EntryRow = {
 
 const MAX_SCREEN_MINUTES = 16 * 60;
 const MAX_TARGET_MINUTES = 12 * 60;
+const SESSION_COOKIE = "mindscroll_session";
+
+function getSessionSecret() {
+  return process.env.AUTH_SECRET ?? process.env.DATABASE_URL ?? "mindscroll-local-secret";
+}
 
 function readText(value: unknown, fallback = "") {
   if (typeof value !== "string") return fallback;
@@ -43,6 +52,13 @@ function readText(value: unknown, fallback = "") {
 function readEmail(value: unknown) {
   const email = readText(value).toLowerCase();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+}
+
+function readPassword(value: unknown) {
+  if (typeof value !== "string") return null;
+
+  const password = value.trim();
+  return password.length >= 6 ? password : null;
 }
 
 function readNumber(value: unknown, min: number, max: number) {
@@ -60,6 +76,43 @@ function serializeEntries(entries: EntryRow[]) {
   }));
 }
 
+function signUserId(userId: number) {
+  const signature = createHmac("sha256", getSessionSecret())
+    .update(String(userId))
+    .digest("hex");
+
+  return `${userId}.${signature}`;
+}
+
+function verifySessionValue(value: string | null) {
+  if (!value) return null;
+
+  const [userIdValue, signature] = value.split(".");
+  const userId = Number(userIdValue);
+
+  if (!Number.isInteger(userId) || userId < 1 || !signature) return null;
+
+  const expected = signUserId(userId).split(".")[1];
+  const receivedBuffer = Buffer.from(signature, "hex");
+  const expectedBuffer = Buffer.from(expected, "hex");
+
+  if (receivedBuffer.length !== expectedBuffer.length) return null;
+  if (!timingSafeEqual(receivedBuffer, expectedBuffer)) return null;
+
+  return userId;
+}
+
+function readSessionUserId(request: Request) {
+  const cookieHeader = request.headers.get("cookie");
+  if (!cookieHeader) return null;
+
+  const cookies = cookieHeader.split(";").map((part) => part.trim());
+  const sessionCookie = cookies.find((part) => part.startsWith(`${SESSION_COOKIE}=`));
+  const value = sessionCookie ? decodeURIComponent(sessionCookie.split("=").slice(1).join("=")) : null;
+
+  return verifySessionValue(value);
+}
+
 async function loadEntries(userId: number) {
   return prisma.$queryRaw<EntryRow[]>`
     SELECT id, day, "screenMinutes", "targetMinutes", goal, note, "createdAt", "updatedAt"
@@ -72,13 +125,18 @@ async function loadEntries(userId: number) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = readNumber(searchParams.get("userId"), 1, Number.MAX_SAFE_INTEGER);
+    const sessionUserId = readSessionUserId(request);
+    const requestedUserId = readNumber(searchParams.get("userId"), 1, Number.MAX_SAFE_INTEGER);
 
-    if (userId === null) {
-      return NextResponse.json({ error: "Bitte erst anmelden." }, { status: 400 });
+    if (sessionUserId === null) {
+      return NextResponse.json({ error: "Bitte erst anmelden." }, { status: 401 });
     }
 
-    const entries = await loadEntries(userId);
+    if (requestedUserId !== null && requestedUserId !== sessionUserId) {
+      return NextResponse.json({ error: "Du bist nicht fuer diesen Account angemeldet." }, { status: 403 });
+    }
+
+    const entries = await loadEntries(sessionUserId);
     return NextResponse.json({ entries: serializeEntries(entries) });
   } catch (error) {
     console.error("Failed to load challenge entries", error);
@@ -95,31 +153,90 @@ export async function POST(request: Request) {
     const body = (await request.json()) as ChallengePayload;
     const action = readText(body.action, "entry");
 
-    if (action === "login") {
+    if (action === "login" || action === "register") {
       const name = readText(body.name);
       const email = readEmail(body.email);
+      const password = readPassword(body.password);
 
-      if (!name || !email) {
+      if (!email || !password || (action === "register" && !name)) {
         return NextResponse.json(
-          { error: "Bitte Name und gültige E-Mail angeben." },
+          { error: action === "register" ? "Bitte Name, gültige E-Mail und ein Passwort mit mindestens 6 Zeichen angeben." : "Bitte gültige E-Mail und Passwort angeben." },
           { status: 400 },
         );
       }
 
-      const users = await prisma.$queryRaw<UserRow[]>`
-        INSERT INTO "User" (name, email, password, "createdAt", "updatedAt")
-        VALUES (${name}, ${email}, '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT (email)
-        DO UPDATE SET name = EXCLUDED.name, "updatedAt" = CURRENT_TIMESTAMP
-        RETURNING id, name, email
+      const existingUsers = await prisma.$queryRaw<UserRow[]>`
+        SELECT id, name, email, password
+        FROM "User"
+        WHERE email = ${email}
+        LIMIT 1
       `;
-      const user = users[0];
-      const entries = await loadEntries(user.id);
+      const existingUser = existingUsers[0] ?? null;
+      let user: UserRow;
 
-      return NextResponse.json({ user, entries: serializeEntries(entries) }, { status: 200 });
+      if (existingUser) {
+        if (action === "register" && existingUser.password) {
+          return NextResponse.json(
+            { error: "Diesen Account gibt es schon. Bitte einloggen." },
+            { status: 409 },
+          );
+        }
+
+        if (existingUser.password && !verifyPassword(password, existingUser.password)) {
+          return NextResponse.json(
+            { error: "Passwort stimmt nicht." },
+            { status: 401 },
+          );
+        }
+
+        const nextPassword = existingUser.password || hashPassword(password);
+        const nextName = name || existingUser.name;
+        const updatedUsers = await prisma.$queryRaw<UserRow[]>`
+          UPDATE "User"
+          SET name = ${nextName}, password = ${nextPassword}, "updatedAt" = CURRENT_TIMESTAMP
+          WHERE id = ${existingUser.id}
+          RETURNING id, name, email, password
+        `;
+        user = updatedUsers[0];
+      } else {
+        if (action === "login") {
+          return NextResponse.json(
+            { error: "Account nicht gefunden. Bitte erst neu erstellen." },
+            { status: 404 },
+          );
+        }
+
+        const hashedPassword = hashPassword(password);
+        const createdUsers = await prisma.$queryRaw<UserRow[]>`
+          INSERT INTO "User" (name, email, password, "createdAt", "updatedAt")
+          VALUES (${name}, ${email}, ${hashedPassword}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          RETURNING id, name, email, password
+        `;
+        user = createdUsers[0];
+      }
+
+      const entries = await loadEntries(user.id);
+      const response = NextResponse.json(
+        {
+          user: { id: user.id, name: user.name, email: user.email },
+          entries: serializeEntries(entries),
+        },
+        { status: 200 },
+      );
+
+      response.cookies.set(SESSION_COOKIE, signUserId(user.id), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 14,
+      });
+
+      return response;
     }
 
     const userId = readNumber(body.userId, 1, Number.MAX_SAFE_INTEGER);
+    const sessionUserId = readSessionUserId(request);
     const day = readNumber(body.day, 1, 7);
     const screenMinutes = readNumber(body.screenMinutes, 0, MAX_SCREEN_MINUTES);
     const targetMinutes = readNumber(body.targetMinutes, 15, MAX_TARGET_MINUTES);
@@ -130,6 +247,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Bitte Tag und Bildschirmzeit angeben." },
         { status: 400 },
+      );
+    }
+
+    if (sessionUserId !== userId) {
+      return NextResponse.json(
+        { error: "Bitte zuerst mit diesem Account anmelden." },
+        { status: 401 },
       );
     }
 

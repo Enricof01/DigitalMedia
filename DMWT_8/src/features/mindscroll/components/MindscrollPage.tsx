@@ -227,7 +227,7 @@ export default function MindscrollPage() {
           <a href="#top">Start</a>
           <a href="#recall">Stopp</a>
           <a href="#impact">Infografik</a>
-          <a href="#survey">Umfrage</a>
+          <a href="#survey">Login</a>
         </nav>
       </details>
 
