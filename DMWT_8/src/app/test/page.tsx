@@ -566,9 +566,7 @@ export default function Home() {
                           <span className="ph-val">{hours % 1 === 0 ? hours : hours.toFixed(1)}</span>
                           <span className="ph-unit">Stunden / Tag</span>
                         </div>
-                        <input type="range" className="ph-range" min={0.5} max={12} step={0.5} value={hours}
-                          onChange={e => setHours(Number(e.target.value))} />
-                        <div className="range-ends"><span>30 Min</span><span>8 Std</span></div>
+                        <div className="ph-clock-note">Wird über die Uhr in der Infografik eingestellt</div>
 
                         <div className="ph-stats">
                           {[
@@ -702,18 +700,10 @@ export default function Home() {
               </div>
               <strong>{lostDaysDisplay}<small>Tage</small></strong>
             </div>
-            <label className="impact-slider">
+            <div className="impact-slider" aria-live="polite">
               <span><b>{hours.toLocaleString("de-DE")}h</b> Social Media pro Tag</span>
-              <input
-                type="range"
-                min={0.5}
-                max={12}
-                step={0.5}
-                value={hours}
-                onChange={(event) => setHours(Number(event.target.value))}
-                aria-label="Social-Media-Stunden pro Tag"
-              />
-            </label>
+              <em>Stelle die Zeit links an der Uhr ein</em>
+            </div>
             <div className="impact-math">
               <div><strong>{yr.toLocaleString("de-DE")}</strong><span>Stunden pro Jahr</span></div>
               <div><strong>{lostDaysDisplay}</strong><span>24h-Tage weg</span></div>
