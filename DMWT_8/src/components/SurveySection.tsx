@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 
 const MAIN_APPS = ["TikTok", "Instagram", "YouTube", "WhatsApp"];
 const MOMENTS = ["Morgens", "Pausen", "Abends", "Bett"];
-const GOALS = ["60 Minuten", "Besser schlafen", "Mehr Fokus", "Weniger Reflex"];
+const GOALS = ["60 Minuten", "Mehr Fokus"];
 
 const APP_STEPS: Record<string, string> = {
   TikTok: "TikTok heute aus dem Homescreen ziehen und erst nach der Challenge wieder oeffnen.",
@@ -58,7 +58,7 @@ export default function SurveySection() {
     Math.min(100, Math.round((dailyMinutes / 720) * 62 + (pickups / 250) * 38)),
   );
   const planSteps = useMemo(() => [
-    APP_STEPS[mainApp] ?? "Die staerkste App für 24 Stunden bewusst ausbremsen.",
+    APP_STEPS[mainApp] ?? "Die stärkste App für 24 Stunden bewusst ausbremsen.",
     MOMENT_STEPS[hardestMoment] ?? "Den schwierigsten Moment heute ohne Feed starten.",
     GOAL_STEPS[goal] ?? "Einen kleinen, messbaren Schritt für heute festlegen.",
   ], [goal, hardestMoment, mainApp]);
@@ -196,7 +196,7 @@ export default function SurveySection() {
                   </label>
 
                   <fieldset className="survey-group">
-                    <legend>Welche App zieht dich am staerksten?</legend>
+                    <legend>Welche App zieht dich am stärkste?</legend>
                     <div className="survey-options two">
                       {MAIN_APPS.map((app) => (
                         <button

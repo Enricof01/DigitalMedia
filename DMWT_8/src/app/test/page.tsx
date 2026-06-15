@@ -912,9 +912,7 @@ export default function Home() {
         .ph-slider-row{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;}
         .ph-val{font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:var(--accent);line-height:1;}
         .ph-unit{font-size:.8rem;color:var(--dim);}
-        .ph-range{width:100%;height:3px;-webkit-appearance:none;background:rgba(255,255,255,.1);border-radius:2px;outline:none;cursor:pointer;margin-bottom:4px;display:block;}
-        .ph-range::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--accent);border-radius:50%;}
-        .range-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:16px;}
+        .ph-clock-note{margin-bottom:16px;padding:9px 10px;border:1px solid rgba(212,245,71,.24);border-radius:9px;background:rgba(212,245,71,.08);color:rgba(247,242,232,.72);font-size:.72rem;line-height:1.35;}
         .ph-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;}
         .ph-stat{background:#343c29;border-radius:10px;padding:12px 10px;}
         .ph-stat.hl{background:#3a4824;}
@@ -992,9 +990,9 @@ export default function Home() {
         .impact-top strong{display:flex;flex-direction:column;align-items:flex-end;font-family:'Bebas Neue',sans-serif;font-size:4.5rem;line-height:.75;font-weight:400;color:#293120;text-shadow:0 10px 26px rgba(41,49,32,.12);}
         .impact-top small{font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#5d6b40;text-shadow:none;margin-top:.45rem;}
         .impact-slider{display:block;border:1px solid rgba(16,20,13,.12);background:rgba(255,255,255,.34);border-radius:10px;padding:.85rem;margin-bottom:.8rem;}
-        .impact-slider span{display:flex;justify-content:space-between;gap:1rem;font-size:.8rem;color:#52613c;margin-bottom:.7rem;}
+        .impact-slider span{display:flex;justify-content:space-between;gap:1rem;font-size:.8rem;color:#52613c;margin-bottom:.45rem;}
         .impact-slider b{font-family:'Bebas Neue',sans-serif;font-size:1.75rem;line-height:.8;color:#10140d;font-weight:400;}
-        .impact-slider input{width:100%;accent-color:#d4f547;cursor:pointer;}
+        .impact-slider em{display:block;font-style:normal;font-size:.72rem;line-height:1.35;color:#5d6b40;}
         .impact-math{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin:1rem 0;}
         .impact-math div{border-radius:10px;padding:.95rem;background:#293120;color:var(--text);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);}
         .impact-math strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:3rem;line-height:.85;color:var(--accent);font-weight:400;}
