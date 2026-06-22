@@ -12,19 +12,18 @@ export default function MindscrollStyles() {
         .story{position:relative;height:820vh;}
         .sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#2c3323 0%,#22291b 58%,#1b2216 100%);}
         .brand-lockup{position:fixed;top:18px;left:20px;z-index:120;display:flex;flex-direction:column;align-items:flex-start;gap:9px;pointer-events:auto;transform:scale(1.38) translateZ(0);transform-origin:top left;}
-        .brand-logo{display:inline-flex;align-items:center;height:38px;padding:3px 8px 3px 3px;background:#090907;border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.08);text-decoration:none;transform:translateZ(0);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;}
-        .brand-logo:hover{transform:translateY(-1px);border-color:rgba(212,245,71,.45);box-shadow:0 22px 48px rgba(0,0,0,.44),0 0 28px rgba(212,245,71,.1),inset 0 1px 0 rgba(255,255,255,.1);}
-        .brand-badge{position:relative;width:34px;height:32px;background:var(--accent);display:flex;align-items:center;justify-content:center;padding:3px;box-shadow:inset 0 0 0 1px rgba(10,10,8,.2);}
-        .brand-badge::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.24),transparent 42%);pointer-events:none;}
-        .brand-phone{position:relative;width:19px;height:25px;border:3px solid #10100e;border-radius:4px 4px 6px 6px;transform:rotate(-10deg);box-shadow:3px 2px 0 rgba(10,10,8,.3);background:rgba(16,16,14,.04);}
-        .brand-phone::before{content:"∞";position:absolute;left:50%;top:43%;transform:translate(-50%,-50%) rotate(10deg);font-family:'DM Sans',sans-serif;font-size:18px;line-height:1;color:#10100e;font-weight:900;}
-        .brand-phone::after{content:"";position:absolute;left:3px;right:3px;bottom:1px;height:2px;border-radius:99px;background:#10100e;}
-        .brand-word{position:relative;display:block;width:136px;height:27px;overflow:hidden;font-family:'Bebas Neue',Impact,sans-serif;font-size:2rem;line-height:.88;color:#f0ede6;letter-spacing:.02em;margin-left:7px;text-shadow:2px 0 0 rgba(255,255,255,.14),0 1px 0 rgba(0,0,0,.9);}
-        .brand-word::after{content:attr(data-text);position:absolute;inset:0;color:var(--accent);opacity:0;clip-path:inset(0 0 65% 0);transform:translateX(0);pointer-events:none;}
-        .brand-word span{display:block;transition:transform .22s ease,opacity .18s ease;}
-        .brand-word span:nth-child(2){color:var(--accent);}
-        .brand-logo:hover .brand-word span{transform:translateY(-27px);}
-        .brand-logo:hover .brand-word::after{animation:brandGlitch .38s steps(2,end) 2;opacity:.82;}
+        .brand-logo{display:inline-flex;align-items:center;height:38px;padding:4px 10px 4px 4px;background:#090907;border:1px solid rgba(255,255,255,.18);box-shadow:0 16px 34px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.07);text-decoration:none;transform:translateZ(0);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;}
+        .brand-logo:hover{transform:translateY(-1px);border-color:rgba(212,245,71,.5);box-shadow:0 18px 38px rgba(0,0,0,.32),0 0 20px rgba(212,245,71,.08),inset 0 1px 0 rgba(255,255,255,.08);}
+        .brand-badge{position:relative;width:34px;height:30px;background:var(--accent);display:flex;align-items:center;justify-content:center;padding:4px;box-shadow:inset 0 0 0 1px rgba(10,10,8,.22);}
+        .brand-phone{position:relative;width:16px;height:22px;border:2px solid #10100e;border-radius:3px;background:transparent;}
+        .brand-phone::before{content:"∞";position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1;color:#10100e;font-weight:900;}
+        .brand-phone::after{content:"";position:absolute;left:5px;right:5px;bottom:2px;height:1.5px;border-radius:99px;background:#10100e;}
+        .brand-word{position:relative;display:block;width:146px;height:27px;overflow:hidden;font-family:'Bebas Neue',Impact,sans-serif;font-size:2rem;line-height:.9;color:#f0ede6;letter-spacing:.045em;margin-left:9px;text-shadow:none;}
+        .brand-word::after{content:"";position:absolute;left:0;right:0;bottom:1px;height:1px;background:var(--accent);opacity:0;transform:scaleX(.62);transform-origin:left;transition:opacity .18s ease,transform .18s ease;}
+        .brand-word span{display:block;transition:color .18s ease;}
+        .brand-word span:nth-child(2){display:none;}
+        .brand-logo:hover .brand-word span{color:var(--accent);}
+        .brand-logo:hover .brand-word::after{opacity:.85;transform:scaleX(1);}
         .brand-tagline{font-size:18px;line-height:1.35;letter-spacing:.2em;text-transform:uppercase;color:rgba(247,242,232,.82);text-shadow:0 10px 24px rgba(0,0,0,.45);max-width:520px;font-weight:700;transition:opacity .22s ease,transform .22s ease;}
         .brand-tagline.is-hidden{opacity:0;transform:translateY(-8px);pointer-events:none;}
         .page-nav{position:fixed;top:158px;right:24px;z-index:130;}
@@ -37,7 +36,6 @@ export default function MindscrollStyles() {
         .page-nav nav{position:absolute;top:50px;right:0;min-width:174px;display:flex;flex-direction:column;gap:4px;padding:7px;background:rgba(9,11,7,.84);border:1px solid rgba(255,255,255,.16);box-shadow:0 24px 58px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(16px);}
         .page-nav a{display:flex;align-items:center;justify-content:flex-start;min-height:36px;padding:0 13px;border-radius:8px;color:rgba(247,242,232,.8);font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;transition:background .16s ease,color .16s ease,transform .16s ease;}
         .page-nav a:hover,.page-nav a:focus-visible{background:var(--accent);color:#10140d;outline:none;transform:translateX(-2px);}
-        @keyframes brandGlitch{0%{transform:translateX(0);clip-path:inset(0 0 72% 0);}35%{transform:translateX(3px);clip-path:inset(34% 0 32% 0);}70%{transform:translateX(-2px);clip-path:inset(66% 0 0 0);}100%{transform:translateX(0);clip-path:inset(0 0 65% 0);}}
         .time-account{position:absolute;top:22px;right:24px;z-index:38;min-width:190px;padding:14px 16px 13px;background:rgba(51,60,41,.88);border:1px solid rgba(255,255,255,.2);box-shadow:0 20px 46px rgba(0,0,0,.22),0 0 28px rgba(212,245,71,.08),inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(14px);}
         .time-account.recover{background:rgba(212,245,71,.94);color:#10140d;border-color:rgba(255,255,255,.38);box-shadow:0 22px 58px rgba(212,245,71,.18),inset 0 1px 0 rgba(255,255,255,.34);}
         .time-account span{display:block;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);line-height:1;}
@@ -273,12 +271,11 @@ export default function MindscrollStyles() {
         }
         @media (max-width:700px){
           .brand-lockup{top:16px;left:16px;gap:9px;transform:scale(1.16) translateZ(0);}
-          .brand-logo{height:38px;padding:3px 8px 3px 3px;}
-          .brand-badge{width:34px;height:32px;padding:3px;}
-          .brand-phone{width:18px;height:24px;border-width:3px;}
-          .brand-phone::before{font-size:17px;}
-          .brand-word{width:136px;height:27px;font-size:2rem;margin-left:7px;}
-          .brand-logo:hover .brand-word span{transform:translateY(-27px);}
+          .brand-logo{height:38px;padding:4px 10px 4px 4px;}
+          .brand-badge{width:34px;height:30px;padding:4px;}
+          .brand-phone{width:16px;height:22px;border-width:2px;}
+          .brand-phone::before{font-size:14px;}
+          .brand-word{width:146px;height:27px;font-size:2rem;margin-left:9px;}
           .brand-tagline{font-size:12px;letter-spacing:.16em;max-width:280px;}
           .page-nav{top:170px;right:16px;}
           .page-nav summary{width:42px;height:38px;}

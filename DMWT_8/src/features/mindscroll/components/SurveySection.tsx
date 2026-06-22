@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type LoginState = "idle" | "loading" | "ready" | "error";
+type ReportState = "idle" | "sending" | "sent" | "error";
 type AuthMode = "login" | "register";
 
 type ChallengeUser = {
@@ -88,7 +89,9 @@ export default function SurveySection() {
   const [entries, setEntries] = useState<ChallengeEntry[]>([]);
   const [loginState, setLoginState] = useState<LoginState>("idle");
   const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [reportState, setReportState] = useState<ReportState>("idle");
   const [message, setMessage] = useState("");
+  const [reportMessage, setReportMessage] = useState("");
 
   const entriesByDay = useMemo(() => {
     const map = new Map<number, ChallengeEntry>();
@@ -200,6 +203,66 @@ export default function SurveySection() {
     } catch (error) {
       setSaveState("error");
       setMessage(error instanceof Error ? error.message : "Speichern fehlgeschlagen.");
+    }
+  }
+
+  async function onLogout() {
+    try {
+      await fetch("/api/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "logout" }),
+      });
+    } finally {
+      setUser(null);
+      setEntries([]);
+      setActiveDay(1);
+      setScreenMinutes(180);
+      setTargetMinutes(120);
+      setGoal(GOALS[0]);
+      setNote("");
+      setSaveState("idle");
+      setReportState("idle");
+      setLoginState("idle");
+      setMessage("");
+      setReportMessage("");
+    }
+  }
+
+  async function onSendWeeklyReport() {
+    if (!user) {
+      setReportState("error");
+      setReportMessage("Bitte erst einloggen.");
+      return;
+    }
+
+    if (entries.length === 0) {
+      setReportState("error");
+      setReportMessage("Speichere zuerst mindestens einen Challenge-Tag.");
+      return;
+    }
+
+    setReportState("sending");
+    setReportMessage("");
+
+    try {
+      const response = await fetch("/api/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "sendWeeklyReport",
+          userId: user.id,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error ?? "Mailversand fehlgeschlagen.");
+
+      setReportState("sent");
+      setReportMessage(data.message ?? "Wochenbericht wurde per E-Mail verschickt.");
+    } catch (error) {
+      setReportState("error");
+      setReportMessage(error instanceof Error ? error.message : "Mailversand fehlgeschlagen.");
     }
   }
 
@@ -326,7 +389,10 @@ export default function SurveySection() {
                         <span>{user.name}</span>
                         <h3>Tag {activeDay}</h3>
                       </div>
-                      <strong>{progressText}</strong>
+                      <div className="challenge-session-actions">
+                        <strong>{progressText}</strong>
+                        <button type="button" onClick={onLogout}>Abmelden</button>
+                      </div>
                     </header>
 
                     <div className="challenge-days" aria-label="Challenge Tage">
@@ -460,6 +526,15 @@ export default function SurveySection() {
               <span>Naechster Schritt</span>
               <p>{tipText}</p>
             </div>
+
+            <div className="challenge-email-report">
+              <span>Wochenbericht</span>
+              <p>Schicke dir deine gespeicherten Tage, Kennzahlen und Interpretation automatisch als E-Mail.</p>
+              <button type="button" onClick={onSendWeeklyReport} disabled={!user || entries.length === 0 || reportState === "sending"}>
+                {reportState === "sending" ? "Sendet..." : "Bericht per E-Mail"}
+              </button>
+              {reportMessage && <small className={reportState === "error" ? "is-error" : ""}>{reportMessage}</small>}
+            </div>
           </aside>
         </div>
       </div>
@@ -487,6 +562,9 @@ export default function SurveySection() {
         .survey-form-head span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#b8b09c;}
         .survey-form-head h3{font-family:'DM Serif Display',serif;font-size:1.55rem;line-height:1.1;font-weight:400;margin-top:3px;}
         .survey-form-head strong{font-family:'Bebas Neue',sans-serif;color:#d4f547;font-size:3rem;line-height:.85;font-weight:400;}
+        .challenge-session-actions{display:flex;flex-direction:column;align-items:flex-end;gap:7px;}
+        .challenge-session-actions button{border:1px solid rgba(212,245,71,.55);background:rgba(212,245,71,.08);color:#d4f547;border-radius:999px;padding:6px 10px;font:inherit;font-size:.66rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .16s ease,color .16s ease,transform .16s ease;}
+        .challenge-session-actions button:hover{background:#d4f547;color:#10140d;transform:translateY(-1px);}
         .auth-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:15px;padding:4px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(8,10,6,.28);}
         .auth-mode-switch button{border:0;border-radius:10px;background:transparent;color:#b8b09c;padding:10px 8px;font:inherit;font-size:.74rem;font-weight:900;letter-spacing:.04em;cursor:pointer;transition:background .16s ease,color .16s ease,transform .16s ease;}
         .auth-mode-switch button:hover,.auth-mode-switch button.active{background:#d4f547;color:#10140d;transform:translateY(-1px);}
@@ -515,7 +593,7 @@ export default function SurveySection() {
         .survey-error{color:#ffd2d2;}
         .survey-success{color:#d4f547;}
         .challenge-dashboard{align-self:stretch;min-height:620px;border:1px solid rgba(16,20,13,.14);background:linear-gradient(180deg,rgba(255,255,255,.46),rgba(255,255,255,.18));box-shadow:0 26px 70px rgba(61,72,42,.16);padding:26px;display:flex;flex-direction:column;gap:20px;}
-        .dashboard-head span,.challenge-reward span,.challenge-tip span{display:block;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:#5b6845;font-weight:900;margin-bottom:8px;}
+        .dashboard-head span,.challenge-reward span,.challenge-tip span,.challenge-email-report span{display:block;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:#5b6845;font-weight:900;margin-bottom:8px;}
         .dashboard-head strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:5rem;line-height:.85;color:#10140d;font-weight:400;}
         .dashboard-head small{font-size:1rem;color:#536048;}
         .challenge-chart{height:190px;display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end;padding:18px;border:1px solid rgba(16,20,13,.12);background:rgba(255,255,255,.28);}
@@ -529,8 +607,13 @@ export default function SurveySection() {
         .challenge-stats div{background:#202619;color:#f7f2e8;padding:18px;border-radius:10px;}
         .challenge-stats strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:3.4rem;line-height:.88;color:#d4f547;font-weight:400;}
         .challenge-stats span{display:block;color:#d8d3c3;font-size:.85rem;margin-top:5px;}
-        .challenge-reward,.challenge-tip{padding:18px;border:1px solid rgba(16,20,13,.13);background:rgba(255,255,255,.3);}
-        .challenge-reward p,.challenge-tip p{margin:0;color:#435035;line-height:1.55;font-size:.98rem;}
+        .challenge-reward,.challenge-tip,.challenge-email-report{padding:18px;border:1px solid rgba(16,20,13,.13);background:rgba(255,255,255,.3);}
+        .challenge-reward p,.challenge-tip p,.challenge-email-report p{margin:0;color:#435035;line-height:1.55;font-size:.98rem;}
+        .challenge-email-report button{width:100%;margin-top:14px;border:0;border-radius:999px;background:#202619;color:#d4f547;padding:12px 14px;font:inherit;font-weight:900;cursor:pointer;transition:background .16s ease,color .16s ease,transform .16s ease;}
+        .challenge-email-report button:hover:not(:disabled){background:#10140d;transform:translateY(-1px);}
+        .challenge-email-report button:disabled{opacity:.46;cursor:not-allowed;}
+        .challenge-email-report small{display:block;margin-top:9px;color:#5b6845;font-size:.78rem;line-height:1.35;}
+        .challenge-email-report small.is-error{color:#8c2f2f;font-weight:800;}
         @media (max-width:1100px){
           .embedded-survey-inner{grid-template-columns:1fr;}
           .challenge-panel{grid-template-columns:1fr;}
