@@ -363,7 +363,7 @@ export default function MindscrollPage() {
                 {/* Layer 1: Reveal */}
                 <div className="screen-layer" ref={layerRevRef}>
                   <div className="reveal-layer">
-                    <div className="reveal-eye">{SCROLLED_POSTS} Posts spaeter</div>
+                    <div className="reveal-eye">{SCROLLED_POSTS} Posts später</div>
                     <div className="reveal-big"><span className="km">{thumbKm}</span><br />km</div>
                     <div className="reveal-sub">zurückgelegt.<br />Kannst du dich an 3 Posts erinnern?</div>
                     <div className="reveal-memory">
