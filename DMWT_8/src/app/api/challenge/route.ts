@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import nodemailer from "nodemailer";
 
 type ChallengePayload = {
   action?: unknown;
@@ -277,32 +278,31 @@ function buildWeeklyReport(user: UserRow, entries: EntryRow[]): ReportData {
 }
 
 async function sendReportEmail(to: string, report: ReportData) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.REPORT_FROM_EMAIL ?? process.env.RESEND_FROM_EMAIL ?? "MINDSCROLL <onboarding@resend.dev>";
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPassword = process.env.GMAIL_APP_PASSWORD;
+  const from = process.env.GMAIL_FROM_EMAIL ?? (gmailUser ? `MINDSCROLL <${gmailUser}>` : "MINDSCROLL");
 
-  if (!apiKey) {
-    throw new Error("RESEND_API_KEY fehlt.");
+  if (!gmailUser || !gmailPassword) {
+    throw new Error("GMAIL_USER oder GMAIL_APP_PASSWORD fehlt.");
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: gmailUser,
+      pass: gmailPassword,
     },
-    body: JSON.stringify({
-      from,
-      to,
-      subject: report.subject,
-      html: report.html,
-      text: report.text,
-    }),
   });
 
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Mailversand fehlgeschlagen: ${detail}`);
-  }
+  await transporter.sendMail({
+    from,
+    to,
+    subject: report.subject,
+    html: report.html,
+    text: report.text,
+  });
 }
 
 export async function GET(request: Request) {
@@ -466,7 +466,7 @@ export async function POST(request: Request) {
         await sendReportEmail(user.email, report);
 
         return NextResponse.json(
-          { sent: true, message: "Wochenbericht wurde per E-Mail verschickt." },
+          { sent: true, message: `Wochenbericht wurde an ${user.email} verschickt.` },
           { status: 200 },
         );
       } catch (error) {

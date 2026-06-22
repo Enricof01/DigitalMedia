@@ -529,7 +529,10 @@ export default function SurveySection() {
 
             <div className="challenge-email-report">
               <span>Wochenbericht</span>
-              <p>Schicke dir deine gespeicherten Tage, Kennzahlen und Interpretation automatisch als E-Mail.</p>
+              <p>
+                Schicke dir deine gespeicherten Tage, Kennzahlen und Interpretation automatisch als E-Mail.
+                {user ? ` Der Bericht geht an ${user.email}.` : ""}
+              </p>
               <button type="button" onClick={onSendWeeklyReport} disabled={!user || entries.length === 0 || reportState === "sending"}>
                 {reportState === "sending" ? "Sendet..." : "Bericht per E-Mail"}
               </button>
