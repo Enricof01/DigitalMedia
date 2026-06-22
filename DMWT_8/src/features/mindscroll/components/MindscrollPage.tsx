@@ -1,10 +1,14 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, type CSSProperties, type PointerEvent } from "react";
-import CreatedBy from "@/components/CreatedBy";
-import { ALTS, FEED_POSTS, PARTICLES, POSTS, SCROLLED_POSTS, STORIES } from "../data/content";
+import { useState, useEffect, useRef, useCallback, type PointerEvent } from "react";
+import { ALTS, FEED_POSTS, PARTICLES, SCROLLED_POSTS, STORIES } from "../data/content";
 import { clamp, easeInOut, easeOut, lerp, phase } from "../utils/math";
 import { formatPhoneTime } from "../utils/time";
+import BrandLockup from "./BrandLockup";
+import FooterSection from "./FooterSection";
+import ImpactSection from "./ImpactSection";
 import MindscrollStyles from "./MindscrollStyles";
+import PageNav from "./PageNav";
+import RecallBreak from "./RecallBreak";
 import SurveySection from "./SurveySection";
 
 export default function MindscrollPage() {
@@ -205,31 +209,8 @@ export default function MindscrollPage() {
 
   return (
     <main className="main" id="top">
-      <div className="brand-lockup">
-        <a className="brand-logo" href="/test" aria-label="Mindscroll">
-          <span className="brand-badge">
-            <span className="brand-phone" />
-          </span>
-          <span className="brand-word" data-text="MINDSCROLL">
-            <span>MINDSCROLL</span>
-            <span>SCROLLFREI</span>
-          </span>
-        </a>
-        <div className={`brand-tagline${showBrandTagline ? "" : " is-hidden"}`}>Kampagne gegen Zeitverschwendung</div>
-      </div>
-      <details className="page-nav">
-        <summary aria-label="Navigation öffnen">
-          <span />
-          <span />
-          <span />
-        </summary>
-        <nav aria-label="Seitennavigation">
-          <a href="#top">Start</a>
-          <a href="#recall">Stopp</a>
-          <a href="#impact">Infografik</a>
-          <a href="#survey">Login</a>
-        </nav>
-      </details>
+      <BrandLockup showTagline={showBrandTagline} />
+      <PageNav />
 
       {/* ═══ STORY HERO ═══ */}
       <div className="story" ref={storyRef}>
@@ -440,133 +421,22 @@ export default function MindscrollPage() {
         </div>
       </div>
 
-      {/* ═══ RECALL BREAK ═══ */}
-      <section className="recall-break" id="recall">
-        <div className="recall-inner">
-          <div className="recall-strip" aria-hidden="true">
-            {POSTS.slice(0, 6).map((post) => (
-              <span key={post.user} style={{ backgroundImage: `url(${post.photo})` }} />
-            ))}
-          </div>
-          <div className="recall-kicker">Stopp</div>
-          <h2>Du hast gerade {SCROLLED_POSTS} Posts gesehen. Erinnerst du dich an 3?</h2>
-          <p>
-            Genau hier passiert der Bruch: Der Feed war laut, schnell und passend.
-            Aber was davon ist wirklich bei dir geblieben?
-          </p>
-          <div className="recall-grid">
-            <div><strong>{SCROLLED_POSTS}</strong><span>Posts gesehen</span></div>
-            <div><strong>3?</strong><span>bewusst erinnert</span></div>
-            <div><strong>{timeAccountValue}</strong><span>{timeAccountHint}</span></div>
-          </div>
-        </div>
-      </section>
+      <RecallBreak timeAccountHint={timeAccountHint} timeAccountValue={timeAccountValue} />
 
-      {/* ═══ CHALLENGE ═══ */}
-      <section className="challenge" id="impact">
-        <div className="ch-inner">
-          <div className="challenge-copy">
-            <div className="ch-eyebrow">Bereit?</div>
-            <h2 className="ch-title">Hol dir heute<br /><span className="ch-accent">60 Minuten</span><br />zurück.</h2>
-            <p className="ch-body">Leg das Handy weg. Nicht für immer. Aber heute, für eine Stunde. Schau wie weit du kommst.</p>
-            <div
-              className="time-dial"
-              role="slider"
-              aria-label="Social-Media-Zeit pro Tag über Uhr einstellen"
-              aria-valuemin={0.5}
-              aria-valuemax={12}
-              aria-valuenow={hours}
-              aria-valuetext={`${hours.toLocaleString("de-DE")} Stunden pro Tag`}
-              tabIndex={0}
-              style={{ "--clock-angle": `${clockAngle}deg` } as CSSProperties}
-              onPointerDown={(event) => {
-                event.currentTarget.setPointerCapture(event.pointerId);
-                setHoursFromClock(event);
-              }}
-              onPointerMove={(event) => {
-                if (event.buttons === 1) setHoursFromClock(event);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "ArrowRight" || event.key === "ArrowUp") setHours((value) => Math.min(12, value + 0.5));
-                if (event.key === "ArrowLeft" || event.key === "ArrowDown") setHours((value) => Math.max(0.5, value - 0.5));
-              }}
-            >
-              <div className="dial-face">
-                {Array.from({ length: 12 }, (_, index) => (
-                  <span
-                    key={index}
-                    className="dial-tick"
-                    style={{ transform: `rotate(${index * 30}deg)` }}
-                  >
-                    <i style={{ transform: `translateX(-50%) rotate(${-index * 30}deg)` }}>{index === 0 ? 12 : index}</i>
-                  </span>
-                ))}
-                <div className="dial-track" />
-                <div className="dial-hand" style={{ transform: `rotate(${clockAngle}deg)` }}>
-                  <span />
-                </div>
-                <div className="dial-center">
-                  <strong>{hours.toLocaleString("de-DE")}h</strong>
-                  <small>pro Tag</small>
-                </div>
-              </div>
-              <div className="dial-hint">Zeiger aufziehen</div>
-            </div>
-          </div>
-          <aside className="impact-graphic" aria-label="Interaktive Infografik zum Zeitverlust">
-            <div className="impact-top">
-              <div>
-                <span className="impact-kicker">Infografik</span>
-                <h3>Dein verlorenes Jahr</h3>
-              </div>
-              <strong>{lostDaysDisplay}<small>Tage</small></strong>
-            </div>
-            <div className="impact-slider" aria-live="polite">
-              <span><b>{hours.toLocaleString("de-DE")}h</b> Social Media pro Tag</span>
-              <em>Stelle die Zeit links an der Uhr ein</em>
-            </div>
-            <div className="impact-math">
-              <div><strong>{yr.toLocaleString("de-DE")}</strong><span>Stunden pro Jahr</span></div>
-              <div><strong>{lostDaysDisplay}</strong><span>24h-Tage weg</span></div>
-            </div>
-            <div className="year-map" aria-label={`${lostDaysDisplay} von 365 Jahrestagen markiert`}>
-              {yearCells.map((isActive, index) => (
-                <span key={index} className={isActive ? "active" : ""} />
-              ))}
-            </div>
-            <p className="impact-caption">
-              Jede helle Kachel steht für einen 24-Stunden-Tag, der im Feed verschwinden kann.
-            </p>
-            <div className="impact-options">
-              <div className="impact-option-head">Was daraus werden könnte</div>
-              {potential.map((item) => (
-                <div className="impact-option" key={item.label}>
-                  <div>
-                    <strong>{item.value.toLocaleString("de-DE")}</strong>
-                    <span>{item.label} {item.unit}</span>
-                  </div>
-                  <i style={{ width: `${Math.min(100, (item.value / item.max) * 100)}%` }} />
-                </div>
-              ))}
-            </div>
-          </aside>
-        </div>
-      </section>
+      <ImpactSection
+        clockAngle={clockAngle}
+        hours={hours}
+        lostDaysDisplay={lostDaysDisplay}
+        potential={potential}
+        yearCells={yearCells}
+        yr={yr}
+        onClockPointer={setHoursFromClock}
+        onHoursChange={setHours}
+      />
 
       <SurveySection />
 
-      {/* ═══ FOOTER ═══ */}
-{/* ═══ FOOTER ═══ */}
-<footer className="site-footer" id="footer">
-  <div className="footer-inner">
-    <div className="footer-logo">scrollfrei.</div>
-    <div className="footer-text">
-      Diese Seite hat keine App. Kein Like-Button. Kein Algorithmus.<br />
-      Nur eine Frage: Was machst du mit deiner Zeit?
-    </div>
-    <CreatedBy />
-  </div>
-</footer>
+      <FooterSection />
 
       <MindscrollStyles />
     </main>

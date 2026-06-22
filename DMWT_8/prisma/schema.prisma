@@ -17,17 +17,6 @@ model User {
   challengeEntries ChallengeEntry[]
 }
 
-model SurveyResponse {
-  id             Int      @id @default(autoincrement())
-  dailyMinutes   Int
-  pickups        Int
-  mainApp        String
-  hardestMoment  String
-  goal           String
-  score          Int
-  createdAt      DateTime @default(now())
-}
-
 model ChallengeEntry {
   id            Int      @id @default(autoincrement())
   userId        Int
