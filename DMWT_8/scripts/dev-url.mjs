@@ -2,7 +2,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createServer } from "node:net";
 
-const testPath = "/test";
+const testPath = "/";
 const localUrlPattern = /https?:\/\/localhost:\d+/;
 const studioUrlPattern = /https?:\/\/localhost:5555/;
 const studioPort = "5555";
